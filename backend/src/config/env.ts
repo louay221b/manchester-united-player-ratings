@@ -6,6 +6,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  SUPABASE_URL: z.string().trim().min(1).url(),
+  SUPABASE_PUBLISHABLE_KEY: z.string().trim().min(1),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

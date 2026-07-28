@@ -1,13 +1,51 @@
 import { BarChart3, CalendarDays, Trophy, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
 import { StatCard } from '../../components/StatCard';
 import { activeSeason, getSeasonPlayerStats, matches, players, votes } from '../../data/mockData';
+import { ApiError } from '../../lib/api';
+import { verifyAdminApiAccess } from '../../services/auth-api.service';
 
 export function AdminDashboardPage() {
   const leader = getSeasonPlayerStats()[0];
   const openVotes = matches.filter((match) => match.voteStatus === 'open').length;
+  const [apiStatus, setApiStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [apiMessage, setApiMessage] = useState('');
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const verifyApiAccess = async () => {
+      setApiStatus('loading');
+      setApiMessage('');
+
+      try {
+        await verifyAdminApiAccess();
+
+        if (!isCancelled) {
+          setApiStatus('success');
+          setApiMessage('Acces API administrateur verifie');
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setApiStatus('error');
+          setApiMessage(
+            error instanceof ApiError
+              ? error.message
+              : 'Impossible de verifier l acces API administrateur.',
+          );
+        }
+      }
+    };
+
+    void verifyApiAccess();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -22,6 +60,28 @@ export function AdminDashboardPage() {
         <StatCard label="Joueurs" value={players.length} />
         <StatCard label="Matchs" value={matches.length} />
         <StatCard label="Votes" value={votes.length} helper={`${openVotes} matchs ouverts`} />
+      </section>
+
+      <section
+        className={[
+          'panel p-5',
+          apiStatus === 'success' ? 'border-emerald-200 bg-emerald-50' : '',
+          apiStatus === 'error' ? 'border-red-200 bg-red-50' : '',
+        ].join(' ')}
+      >
+        <p className="text-sm font-black uppercase tracking-[0.12em] text-zinc-500">
+          Verification API
+        </p>
+        <p
+          className={[
+            'mt-2 font-black',
+            apiStatus === 'success' ? 'text-emerald-700' : '',
+            apiStatus === 'error' ? 'text-red-700' : '',
+            apiStatus === 'loading' ? 'text-zinc-700' : '',
+          ].join(' ')}
+        >
+          {apiStatus === 'loading' ? 'Verification de l acces API administrateur...' : apiMessage}
+        </p>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-4">
