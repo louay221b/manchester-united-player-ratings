@@ -1,36 +1,18 @@
-import { Link, useParams } from 'react-router';
+import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
 import { PlayerAvatar } from '../../components/PlayerAvatar';
-import {
-  formatRating,
-  getMatchById,
-  getMatchResultRows,
-  UNITED_TEAM_NAME,
-} from '../../data/mockData';
+import { formatRating, getSeasonPlayerStats } from '../../data/mockData';
 
-export function MatchResultsPage() {
-  const { matchId } = useParams();
-  const match = matchId ? getMatchById(matchId) : undefined;
-
-  if (!match) {
-    return (
-      <PageHeader
-        eyebrow="Resultats"
-        title="Match introuvable"
-        description="Aucun resultat temporaire pour cette route."
-      />
-    );
-  }
-
-  const rows = getMatchResultRows(match.id);
+export function RankingPage() {
+  const rows = getSeasonPlayerStats();
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Resultats"
-        title={`${UNITED_TEAM_NAME} vs ${match.opponent}`}
-        description="Moyennes temporaires calculees depuis les votes locaux."
+        eyebrow="Classement"
+        title="Classement de la saison"
+        description="La moyenne saisonniere est la moyenne des notes moyennes obtenues match par match."
       />
 
       <section className="panel overflow-hidden">
@@ -38,16 +20,20 @@ export function MatchResultsPage() {
           <table className="min-w-full divide-y divide-zinc-200">
             <thead className="bg-zinc-50">
               <tr>
+                <th className="table-head">Rang</th>
                 <th className="table-head">Joueur</th>
                 <th className="table-head">Poste</th>
+                <th className="table-head">Matchs joues</th>
+                <th className="table-head">Matchs notes</th>
                 <th className="table-head">Votes</th>
-                <th className="table-head">Note moyenne</th>
-                <th className="table-head">Distinction</th>
+                <th className="table-head">Moyenne saison</th>
+                <th className="table-head">Homme du match</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 bg-white">
               {rows.map((row) => (
                 <tr key={row.player.id}>
+                  <td className="table-cell text-lg font-black text-zinc-950">#{row.rank}</td>
                   <td className="table-cell">
                     <Link
                       to={`/players/${row.player.id}`}
@@ -58,11 +44,13 @@ export function MatchResultsPage() {
                     </Link>
                   </td>
                   <td className="table-cell">{row.player.position}</td>
+                  <td className="table-cell">{row.matchesPlayed}</td>
+                  <td className="table-cell">{row.matchesRated}</td>
                   <td className="table-cell">{row.totalVotes}</td>
                   <td className="table-cell text-lg font-black text-united-red">
-                    {formatRating(row.averageRating)}
+                    {formatRating(row.seasonAverage)}
                   </td>
-                  <td className="table-cell">{row.isManOfTheMatch ? 'Homme du match' : '-'}</td>
+                  <td className="table-cell">{row.manOfTheMatchAwards}</td>
                 </tr>
               ))}
             </tbody>

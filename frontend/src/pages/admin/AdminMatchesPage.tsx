@@ -1,16 +1,22 @@
 import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
-import { StatusBadge } from '../../components/StatusBadge';
-import { formatDate, matches, UNITED_TEAM_NAME } from '../../data/mockData';
+import { VoteStatusBadge } from '../../components/VoteStatusBadge';
+import {
+  formatDate,
+  formatScore,
+  getCompetitionById,
+  matches,
+  UNITED_TEAM_NAME,
+} from '../../data/mockData';
 
-export function MatchesAdminPage() {
+export function AdminMatchesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Administration"
         title="Gestion des matchs"
-        description="Manchester United est fixe, l administrateur renseigne seulement l adversaire et les informations du match."
+        description="Manchester United est fixe, l adversaire et le statut des votes varient par match."
       />
 
       <section className="panel overflow-hidden">
@@ -19,37 +25,39 @@ export function MatchesAdminPage() {
             <thead className="bg-zinc-50">
               <tr>
                 <th className="table-head">Match</th>
+                <th className="table-head">Competition</th>
                 <th className="table-head">Date</th>
-                <th className="table-head">Lieu</th>
-                <th className="table-head">Statut</th>
+                <th className="table-head">Score</th>
+                <th className="table-head">Votes</th>
                 <th className="table-head">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200">
+            <tbody className="divide-y divide-zinc-200 bg-white">
               {matches.map((match) => (
                 <tr key={match.id}>
-                  <td className="table-cell font-semibold text-zinc-950">
+                  <td className="table-cell font-black text-zinc-950">
                     {UNITED_TEAM_NAME} vs {match.opponent}
                   </td>
+                  <td className="table-cell">{getCompetitionById(match.competitionId)?.shortName}</td>
                   <td className="table-cell">{formatDate(match.date)}</td>
-                  <td className="table-cell">{match.venue}</td>
+                  <td className="table-cell">{formatScore(match)}</td>
                   <td className="table-cell">
-                    <StatusBadge status={match.status} />
+                    <VoteStatusBadge status={match.voteStatus} />
                   </td>
                   <td className="table-cell">
                     <div className="flex flex-wrap gap-2">
                       <Link
-                        to="/admin/lineup"
-                        className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700"
+                        to={`/admin/matches/${match.id}/lineup`}
+                        className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-bold text-zinc-700 hover:border-united-red hover:text-united-red"
                       >
                         Composition
                       </Link>
-                      <button
-                        type="button"
-                        className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700"
+                      <Link
+                        to={`/admin/matches/${match.id}/votes`}
+                        className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-bold text-white hover:bg-zinc-800"
                       >
-                        Modifier
-                      </button>
+                        Votes
+                      </Link>
                     </div>
                   </td>
                 </tr>

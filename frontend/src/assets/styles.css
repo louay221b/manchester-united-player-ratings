@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply min-h-screen bg-zinc-50 text-zinc-950 antialiased;
+    @apply min-h-screen bg-zinc-100 text-zinc-950 antialiased;
   }
 
   a {
@@ -21,6 +21,10 @@
 @layer components {
   .panel {
     @apply rounded-lg border border-zinc-200 bg-white shadow-sm;
+  }
+
+  .panel-dark {
+    @apply rounded-lg border border-zinc-800 bg-zinc-950 text-white shadow-sm;
   }
 
   .eyebrow {
