@@ -2,13 +2,20 @@ import { Link } from 'react-router';
 
 import { PageHeader } from '../components/PageHeader';
 
-export function AccessDeniedPage() {
+interface AccessDeniedPageProps {
+  description?: string;
+}
+
+export function AccessDeniedPage({ description }: AccessDeniedPageProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
         eyebrow="Acces refuse"
         title="Cette zone est reservee aux administrateurs"
-        description="Ton compte est connecte, mais il ne dispose pas du role admin requis pour cette page."
+        description={
+          description ??
+          'Ton compte est connecte, mais il ne dispose pas du role admin requis pour cette page.'
+        }
       />
       <Link
         to="/"

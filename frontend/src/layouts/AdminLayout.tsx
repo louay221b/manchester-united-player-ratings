@@ -18,15 +18,24 @@ const links = [
 ];
 
 export function AdminLayout() {
-  const { logout, role, user } = useAuth();
+  const { isLoading, profile, profileError, role, signOut, user } = useAuth();
   const navigate = useNavigate();
+  const displayName = profile?.full_name || user?.email || 'Administrateur';
 
-  if (role !== 'admin') {
-    return <AccessDeniedPage />;
+  if (isLoading) {
+    return (
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">
+        Chargement de l espace administrateur...
+      </div>
+    );
   }
 
-  const handleLogout = () => {
-    logout();
+  if (role !== 'admin') {
+    return <AccessDeniedPage description={profileError ?? undefined} />;
+  }
+
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login', { replace: true });
   };
 
@@ -35,9 +44,7 @@ export function AdminLayout() {
       <aside className="panel h-fit p-3">
         <div className="px-3 py-2">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-united-red">Admin</p>
-          <p className="mt-1 text-sm font-semibold text-zinc-500">
-            {user?.name ?? 'Pilotage frontend temporaire'}
-          </p>
+          <p className="mt-1 text-sm font-semibold text-zinc-500">{displayName}</p>
         </div>
         <nav className="mt-3 flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
           {links.map((link) => (

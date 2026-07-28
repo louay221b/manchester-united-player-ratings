@@ -1,108 +1,297 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
 
-import { AuthContext, type AuthContextValue, type AuthUser } from './AuthContext';
+import {
+  AuthContext,
+  type AuthActionResult,
+  type AuthContextValue,
+  type Profile,
+  type SignUpResult,
+} from './AuthContext';
+import { supabase, supabaseConfigError } from '../lib/supabase';
 
-const AUTH_STORAGE_KEY = 'mufc-player-ratings-session';
+const GENERIC_AUTH_ERROR = 'Une erreur d authentification est survenue. Reessaie dans un instant.';
+const PROFILE_ERROR =
+  'Impossible de charger le profil. Les droits administrateur sont desactives pour cette session.';
 
-// Authentication is intentionally temporary and frontend-only.
-// Replace this with Supabase Auth plus backend-side role checks before production.
-const demoAccounts: Array<AuthUser & { password: string }> = [
-  {
-    id: 'demo-admin',
-    email: 'admin@example.com',
-    password: 'Admin123!',
-    name: 'Administrateur demo',
-    role: 'admin',
-  },
-  {
-    id: 'demo-user',
-    email: 'user@example.com',
-    password: 'User123!',
-    name: 'Supporter demo',
-    role: 'user',
-  },
-];
-
-const readStoredUser = () => {
-  if (typeof window === 'undefined') {
-    return null;
+const toReadableAuthError = (message?: string) => {
+  if (!message) {
+    return GENERIC_AUTH_ERROR;
   }
 
-  const rawSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!rawSession) {
-    return null;
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('invalid login credentials')) {
+    return 'Email ou mot de passe incorrect.';
   }
 
-  try {
-    return JSON.parse(rawSession) as AuthUser;
-  } catch {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
-    return null;
+  if (normalized.includes('email not confirmed')) {
+    return 'Adresse email non confirmee. Consulte ta boite mail avant de te connecter.';
   }
-};
 
-const storeUser = (user: AuthUser) => {
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+  if (normalized.includes('password')) {
+    return 'Le mot de passe ne respecte pas les exigences de securite.';
+  }
+
+  return message;
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser());
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(!supabaseConfigError);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(supabaseConfigError);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
-  const login = useCallback((email: string, password: string) => {
-    const account = demoAccounts.find(
-      (demoAccount) =>
-        demoAccount.email.toLowerCase() === email.trim().toLowerCase() &&
-        demoAccount.password === password,
-    );
-
-    if (!account) {
-      return false;
+  useEffect(() => {
+    if (supabaseConfigError) {
+      return undefined;
     }
 
-    const sessionUser: AuthUser = {
-      id: account.id,
-      email: account.email,
-      name: account.name,
-      role: account.role,
+    let isMounted = true;
+
+    const loadInitialSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setAuthError(toReadableAuthError(error.message));
+      }
+
+      setSession(data.session);
+      setIsSessionLoading(false);
     };
 
-    setUser(sessionUser);
-    storeUser(sessionUser);
-    return true;
+    void loadInitialSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthError(null);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const register = useCallback((name: string, email: string, password: string) => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      return false;
+  const fetchProfile = useCallback(async (userId: string) => {
+    setIsProfileLoading(true);
+    setProfileError(null);
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, created_at, updated_at')
+      .eq('id', userId)
+      .maybeSingle<Profile>();
+
+    if (error) {
+      setProfile(null);
+      setProfileError(PROFILE_ERROR);
+      setIsProfileLoading(false);
+      return;
     }
 
-    const sessionUser: AuthUser = {
-      id: `temporary-${Date.now()}`,
+    if (!data) {
+      setProfile(null);
+      setProfileError('Aucun profil associe a cette session. Acces administrateur refuse.');
+      setIsProfileLoading(false);
+      return;
+    }
+
+    setProfile(data);
+    setIsProfileLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (supabaseConfigError) {
+      return undefined;
+    }
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      queueMicrotask(() => {
+        setProfile(null);
+        setProfileError(null);
+        setIsProfileLoading(false);
+      });
+      return undefined;
+    }
+
+    let isCancelled = false;
+
+    const loadProfile = async () => {
+      setIsProfileLoading(true);
+      setProfileError(null);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, created_at, updated_at')
+        .eq('id', userId)
+        .maybeSingle<Profile>();
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (error) {
+        setProfile(null);
+        setProfileError(PROFILE_ERROR);
+        setIsProfileLoading(false);
+        return;
+      }
+
+      if (!data) {
+        setProfile(null);
+        setProfileError('Aucun profil associe a cette session. Acces administrateur refuse.');
+        setIsProfileLoading(false);
+        return;
+      }
+
+      setProfile(data);
+      setIsProfileLoading(false);
+    };
+
+    void loadProfile();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [session?.user.id]);
+
+  const refreshProfile = useCallback(async () => {
+    const userId = session?.user.id;
+
+    if (!userId || supabaseConfigError) {
+      setProfile(null);
+      setProfileError(null);
+      setIsProfileLoading(false);
+      return;
+    }
+
+    await fetchProfile(userId);
+  }, [fetchProfile, session?.user.id]);
+
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthActionResult> => {
+    setAuthError(null);
+
+    if (supabaseConfigError) {
+      setAuthError(supabaseConfigError);
+      return { success: false, error: supabaseConfigError };
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      name: name.trim(),
-      role: 'user',
-    };
+      password,
+    });
 
-    setUser(sessionUser);
-    storeUser(sessionUser);
-    return true;
+    if (error) {
+      const message = toReadableAuthError(error.message);
+      setAuthError(message);
+      return { success: false, error: message };
+    }
+
+    setSession(data.session);
+    return { success: true };
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  const signUp = useCallback(
+    async ({
+      fullName,
+      email,
+      password,
+    }: {
+      fullName: string;
+      email: string;
+      password: string;
+    }): Promise<SignUpResult> => {
+      setAuthError(null);
+
+      if (supabaseConfigError) {
+        setAuthError(supabaseConfigError);
+        return { success: false, error: supabaseConfigError };
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+          },
+        },
+      });
+
+      if (error) {
+        const message = toReadableAuthError(error.message);
+        setAuthError(message);
+        return { success: false, error: message };
+      }
+
+      if (data.session) {
+        setSession(data.session);
+      }
+
+      return {
+        success: true,
+        needsEmailConfirmation: !data.session,
+      };
+    },
+    [],
+  );
+
+  const signOut = useCallback(async (): Promise<AuthActionResult> => {
+    const { error } = await supabase.auth.signOut();
+
+    setSession(null);
+    setProfile(null);
+    setProfileError(null);
+
+    if (error) {
+      const message = toReadableAuthError(error.message);
+      setAuthError(message);
+      return { success: false, error: message };
+    }
+
+    setAuthError(null);
+    return { success: true };
   }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user,
-      isAuthenticated: Boolean(user),
-      role: user?.role ?? null,
-      login,
-      register,
-      logout,
+      user: session?.user ?? null,
+      session,
+      profile,
+      role: profile?.role ?? null,
+      isAuthenticated: Boolean(session?.user),
+      isLoading: isSessionLoading || (Boolean(session?.user) && isProfileLoading),
+      isProfileLoading,
+      authError,
+      profileError,
+      signIn,
+      signUp,
+      signOut,
+      refreshProfile,
     }),
-    [login, logout, register, user],
+    [
+      authError,
+      isProfileLoading,
+      isSessionLoading,
+      profile,
+      profileError,
+      refreshProfile,
+      session,
+      signIn,
+      signOut,
+      signUp,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

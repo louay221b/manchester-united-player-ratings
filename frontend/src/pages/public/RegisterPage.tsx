@@ -4,20 +4,60 @@ import { Link, useNavigate } from 'react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { useAuth } from '../../contexts/useAuth';
 
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 export function RegisterPage() {
-  const { register } = useAuth();
+  const { authError, signUp } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const visibleError = formError || authError;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
+    setFormError('');
+    setConfirmationMessage('');
 
-    if (!register(name, email, password)) {
-      setError('Renseigne un pseudo, un email et un mot de passe pour continuer.');
+    if (!fullName.trim()) {
+      setFormError('Renseigne ton nom complet.');
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setFormError('Renseigne une adresse email valide.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setFormError('Le mot de passe doit contenir au moins 8 caracteres.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setFormError('La confirmation du mot de passe ne correspond pas.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await signUp({ fullName, email, password });
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setFormError(result.error ?? 'Inscription impossible pour le moment.');
+      return;
+    }
+
+    if (result.needsEmailConfirmation) {
+      setConfirmationMessage(
+        'Inscription recue. Consulte ton email pour confirmer ton compte avant de te connecter.',
+      );
+      setPassword('');
+      setConfirmPassword('');
       return;
     }
 
@@ -29,17 +69,17 @@ export function RegisterPage() {
       <PageHeader
         eyebrow="Compte supporter"
         title="Inscription"
-        description="Creation de session temporaire cote frontend, sans backend ni API externe."
+        description="Cree ton compte Supabase. Le profil recevra automatiquement le role user."
       />
       <form onSubmit={handleSubmit} className="panel space-y-4 p-6">
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Pseudo</span>
+          <span className="text-sm font-bold text-zinc-700">Nom complet</span>
           <input
             type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
             className="focus-ring mt-2 w-full rounded-md border border-zinc-300 px-3 py-2"
-            placeholder="RedDevil92"
+            placeholder="Alex Supporter"
             autoComplete="name"
           />
         </label>
@@ -65,16 +105,33 @@ export function RegisterPage() {
             autoComplete="new-password"
           />
         </label>
-        {error ? (
+        <label className="block">
+          <span className="text-sm font-bold text-zinc-700">Confirmation du mot de passe</span>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            className="focus-ring mt-2 w-full rounded-md border border-zinc-300 px-3 py-2"
+            placeholder="********"
+            autoComplete="new-password"
+          />
+        </label>
+        {visibleError ? (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-            {error}
+            {visibleError}
+          </p>
+        ) : null}
+        {confirmationMessage ? (
+          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+            {confirmationMessage}
           </p>
         ) : null}
         <button
           type="submit"
-          className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
+          disabled={isSubmitting}
+          className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          Creer le compte
+          {isSubmitting ? 'Inscription en cours...' : 'Creer le compte'}
         </button>
         <p className="text-sm text-zinc-600">
           Deja inscrit ?{' '}

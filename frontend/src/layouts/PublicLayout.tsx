@@ -11,12 +11,13 @@ const baseLinks = [
 ];
 
 export function PublicLayout() {
-  const { isAuthenticated, logout, role, user } = useAuth();
+  const { isAuthenticated, isLoading, profile, role, signOut, user } = useAuth();
   const navigate = useNavigate();
+  const displayName = profile?.full_name || user?.email || 'Compte';
   const links = [
     ...baseLinks,
     ...(role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
-    ...(!isAuthenticated
+    ...(!isAuthenticated && !isLoading
       ? [
           { to: '/login', label: 'Connexion' },
           { to: '/register', label: 'Inscription' },
@@ -24,8 +25,8 @@ export function PublicLayout() {
       : []),
   ];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login', { replace: true });
   };
 
@@ -45,11 +46,17 @@ export function PublicLayout() {
                 <span className="block text-lg font-black text-zinc-950">Player Ratings</span>
               </span>
             </Link>
-            {isAuthenticated ? (
+            {isLoading ? (
+              <span className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-bold text-zinc-500">
+                Session...
+              </span>
+            ) : isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <span className="hidden text-right text-sm sm:block">
-                  <span className="block font-black text-zinc-950">{user?.name}</span>
-                  <span className="text-xs font-semibold uppercase text-zinc-500">{role}</span>
+                  <span className="block font-black text-zinc-950">{displayName}</span>
+                  <span className="text-xs font-semibold uppercase text-zinc-500">
+                    {role ?? 'user'}
+                  </span>
                 </span>
                 <button
                   type="button"

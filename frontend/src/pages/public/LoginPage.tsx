@@ -14,28 +14,41 @@ type LoginLocationState = {
   from?: RedirectLocation;
 };
 
-const demoAccounts = [
-  { label: 'Administrateur', email: 'admin@example.com', password: 'Admin123!', role: 'admin' },
-  { label: 'Utilisateur', email: 'user@example.com', password: 'User123!', role: 'user' },
-];
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { authError, signIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
   const state = location.state as LoginLocationState | null;
   const from = state?.from;
   const redirectTo = `${from?.pathname ?? '/'}${from?.search ?? ''}${from?.hash ?? ''}`;
+  const visibleError = formError || authError;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
+    setFormError('');
 
-    if (!login(email, password)) {
-      setError('Identifiants invalides pour les comptes de demonstration.');
+    if (!isValidEmail(email.trim())) {
+      setFormError('Renseigne une adresse email valide.');
+      return;
+    }
+
+    if (!password) {
+      setFormError('Renseigne ton mot de passe.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await signIn(email, password);
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setFormError(result.error ?? 'Connexion impossible pour le moment.');
       return;
     }
 
@@ -47,7 +60,7 @@ export function LoginPage() {
       <PageHeader
         eyebrow="Compte supporter"
         title="Connexion"
-        description="Authentification temporaire cote frontend, en attendant Supabase Auth et les controles backend."
+        description="Connecte-toi avec ton compte Supabase pour acceder aux votes et aux espaces proteges."
       />
       <form onSubmit={handleSubmit} className="panel space-y-4 p-6">
         <label className="block">
@@ -72,16 +85,17 @@ export function LoginPage() {
             autoComplete="current-password"
           />
         </label>
-        {error ? (
+        {visibleError ? (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-            {error}
+            {visibleError}
           </p>
         ) : null}
         <button
           type="submit"
-          className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
+          disabled={isSubmitting}
+          className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          Se connecter
+          {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
         </button>
         <p className="text-sm text-zinc-600">
           Pas encore inscrit ?{' '}
@@ -90,34 +104,6 @@ export function LoginPage() {
           </Link>
         </p>
       </form>
-
-      <section className="panel space-y-3 p-5">
-        <h2 className="text-lg font-black text-zinc-950">Comptes de demonstration</h2>
-        <p className="text-sm text-zinc-600">
-          Ces comptes servent uniquement a tester l interface avant Supabase.
-        </p>
-        <div className="grid gap-3">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              onClick={() => {
-                setEmail(account.email);
-                setPassword(account.password);
-                setError('');
-              }}
-              className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-left hover:border-united-red hover:bg-red-50/40"
-            >
-              <span className="block font-black text-zinc-950">
-                {account.label} - role {account.role}
-              </span>
-              <span className="mt-1 block text-sm text-zinc-600">
-                {account.email} / {account.password}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
