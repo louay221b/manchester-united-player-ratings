@@ -37,7 +37,10 @@ export const mapSupabaseError = (
   error: SupabaseErrorLike,
   fallbackMessage = 'Database operation failed',
 ) => {
-  if (error.message.toLowerCase().includes('invalid input syntax for type uuid')) {
+  if (
+    error.code === '22P02' ||
+    error.message.toLowerCase().includes('invalid input syntax for type uuid')
+  ) {
     return new HttpError(400, 'INVALID_ID', 'Invalid identifier');
   }
 

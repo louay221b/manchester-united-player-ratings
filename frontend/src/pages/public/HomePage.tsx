@@ -5,6 +5,7 @@ import { MatchCard } from '../../components/MatchCard';
 import { PageHeader } from '../../components/PageHeader';
 import { PlayerCard } from '../../components/PlayerCard';
 import { StatCard } from '../../components/StatCard';
+import { useAuth } from '../../contexts/useAuth';
 import {
   activeSeason,
   getSeasonPlayerStats,
@@ -12,11 +13,15 @@ import {
   UNITED_TEAM_NAME,
   votes,
 } from '../../data/mockData';
+import { useVotingMatches } from '../../hooks/use-voting-matches';
 
 export function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const votingMatchesQuery = useVotingMatches(isAuthenticated && !isLoading);
   const openMatch = matches.find((match) => match.voteStatus === 'open') ?? matches[0];
   const featuredMatches = matches.slice(0, 2);
   const leaders = getSeasonPlayerStats().slice(0, 3);
+  const liveOpenMatch = votingMatchesQuery.data?.[0];
 
   return (
     <div className="space-y-8">
@@ -35,7 +40,7 @@ export function HomePage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to={`/matches/${openMatch.id}/vote`}
+                to={liveOpenMatch ? `/matches/${liveOpenMatch.id}/vote` : `/matches/${openMatch.id}/vote`}
                 className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
               >
                 <Star size={18} aria-hidden="true" />
@@ -71,6 +76,80 @@ export function HomePage() {
         <StatCard label="Votes ouverts" value={matches.filter((match) => match.voteStatus === 'open').length} />
         <StatCard label="Joueurs suivis" value={leaders.length} helper="Top public affiche" />
         <StatCard label="Saison" value={activeSeason.name.replace('Saison ', '')} helper="Fixture locale" />
+      </section>
+
+      <section className="space-y-4">
+        <PageHeader
+          eyebrow="Votes"
+          title="Votes disponibles"
+          description="Les matchs termines apparaissent ici automatiquement quand les votes sont ouverts."
+        />
+
+        {!isAuthenticated ? (
+          <div className="panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold text-zinc-600">
+              Connecte-toi pour voir les matchs ouverts au vote.
+            </p>
+            <Link
+              to="/login"
+              className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
+            >
+              Connexion
+            </Link>
+          </div>
+        ) : null}
+
+        {isAuthenticated && votingMatchesQuery.isLoading ? (
+          <div className="panel p-5 text-sm font-semibold text-zinc-600">
+            Chargement des votes disponibles...
+          </div>
+        ) : null}
+
+        {isAuthenticated && votingMatchesQuery.isError ? (
+          <div className="panel p-5 text-sm font-semibold text-red-700">
+            Impossible de charger les votes disponibles.
+          </div>
+        ) : null}
+
+        {isAuthenticated && votingMatchesQuery.isSuccess && votingMatchesQuery.data.length === 0 ? (
+          <div className="panel p-5 text-sm font-semibold text-zinc-600">
+            Aucun match ouvert au vote pour le moment.
+          </div>
+        ) : null}
+
+        {isAuthenticated && votingMatchesQuery.isSuccess && votingMatchesQuery.data.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {votingMatchesQuery.data.map((match) => (
+              <article key={match.id} className="panel overflow-hidden">
+                <div className="p-5">
+                  <p className="eyebrow">{match.competition}</p>
+                  <h2 className="mt-2 text-xl font-black text-zinc-950">
+                    Manchester United vs {match.opponentName}
+                  </h2>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    {new Intl.DateTimeFormat('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    }).format(new Date(match.matchDate))}
+                  </p>
+                  <p className="mt-4 text-3xl font-black text-zinc-950">
+                    {match.manchesterUnitedScore}-{match.opponentScore}
+                  </p>
+                </div>
+                <div className="bg-zinc-50 px-5 py-4">
+                  <Link
+                    to={`/matches/${match.id}/vote`}
+                    className="inline-flex items-center gap-2 rounded-md bg-united-red px-3 py-2 text-sm font-bold text-white hover:bg-red-800"
+                  >
+                    Noter le match
+                    <Star size={16} aria-hidden="true" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

@@ -3,8 +3,10 @@ import { Router } from 'express';
 import { adminRouter } from './admin.routes.js';
 import { authRouter } from './auth.routes.js';
 import { healthRouter } from './health.routes.js';
+import { matchesRouter } from './matches.routes.js';
 import { playersRouter } from './players.routes.js';
 import { seasonsRouter } from './seasons.routes.js';
+import { votingRouter } from './voting.routes.js';
 
 export const apiRouter = Router();
 
@@ -13,3 +15,5 @@ apiRouter.use(authRouter);
 apiRouter.use(adminRouter);
 apiRouter.use(seasonsRouter);
 apiRouter.use(playersRouter);
+apiRouter.use(matchesRouter);
+apiRouter.use(votingRouter);
