@@ -5,6 +5,7 @@ import { authRouter } from './auth.routes.js';
 import { healthRouter } from './health.routes.js';
 import { matchesRouter } from './matches.routes.js';
 import { playersRouter } from './players.routes.js';
+import { rankingsRouter } from './rankings.routes.js';
 import { seasonsRouter } from './seasons.routes.js';
 import { votingRouter } from './voting.routes.js';
 
@@ -16,4 +17,5 @@ apiRouter.use(adminRouter);
 apiRouter.use(seasonsRouter);
 apiRouter.use(playersRouter);
 apiRouter.use(matchesRouter);
+apiRouter.use(rankingsRouter);
 apiRouter.use(votingRouter);

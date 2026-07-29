@@ -1,15 +1,22 @@
 import { Link, useParams } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
+import { StatCard } from '../../components/StatCard';
+import { useActiveSeasonRanking } from '../../hooks/use-season-ranking';
 import { usePlayer } from '../../hooks/use-players';
 import { ApiError } from '../../lib/api';
 import type { Player } from '../../types/player';
+import type { RankingFilters } from '../../types/ranking';
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof ApiError ? error.message : fallback;
 
 const getPlayerInitials = (player: Player) =>
   `${player.firstName.charAt(0)}${player.lastName.charAt(0)}`.toUpperCase();
+
+const playerProfileRankingFilters: RankingFilters = {};
+
+const formatAverage = (value: number | null) => (value === null ? '—' : value.toFixed(2));
 
 function PlayerHeroAvatar({ player }: { player: Player }) {
   if (player.photoUrl) {
@@ -33,6 +40,7 @@ function PlayerHeroAvatar({ player }: { player: Player }) {
 export function PlayerProfilePage() {
   const { playerId } = useParams();
   const playerQuery = usePlayer(playerId ?? '');
+  const rankingQuery = useActiveSeasonRanking(playerProfileRankingFilters, Boolean(playerId));
 
   if (!playerId) {
     return (
@@ -86,6 +94,7 @@ export function PlayerProfilePage() {
   }
 
   const player = playerQuery.data;
+  const seasonStats = rankingQuery.data?.ranking.find((row) => row.playerId === player.id);
 
   return (
     <div className="space-y-6">
@@ -127,6 +136,48 @@ export function PlayerProfilePage() {
             {player.leftAt ?? 'Non renseigne'}
           </p>
         </article>
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <p className="eyebrow">Saison</p>
+          <h2 className="mt-2 text-2xl font-black text-zinc-950">Statistiques de saison</h2>
+          <p className="mt-2 text-sm font-semibold text-zinc-500">
+            Statistiques issues du classement de la saison active publiee.
+          </p>
+        </div>
+
+        {rankingQuery.isLoading ? (
+          <div className="panel p-6 text-sm font-semibold text-zinc-600">
+            Chargement des statistiques de saison...
+          </div>
+        ) : null}
+
+        {rankingQuery.isError ? (
+          <div className="panel border-red-200 bg-red-50 p-6 text-sm font-semibold text-red-700">
+            {getErrorMessage(
+              rankingQuery.error,
+              'Impossible de charger les statistiques de saison.',
+            )}
+          </div>
+        ) : null}
+
+        {rankingQuery.data && !seasonStats ? (
+          <div className="panel p-6 text-sm font-semibold text-zinc-600">
+            Aucune statistique publiee pour ce joueur sur la saison active.
+          </div>
+        ) : null}
+
+        {seasonStats ? (
+          <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+            <StatCard label="Matchs joues" value={seasonStats.matchesPlayed} />
+            <StatCard label="Matchs notes" value={seasonStats.ratedMatches} />
+            <StatCard label="Votes" value={seasonStats.totalVotes} />
+            <StatCard label="Moyenne" value={formatAverage(seasonStats.seasonAverage)} />
+            <StatCard label="Homme du match" value={seasonStats.manOfTheMatchCount} />
+            <StatCard label="Rang" value={`#${seasonStats.rank}`} />
+          </div>
+        ) : null}
       </section>
     </div>
   );

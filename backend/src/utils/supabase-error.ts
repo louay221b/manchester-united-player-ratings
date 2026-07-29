@@ -57,6 +57,18 @@ export const mapSupabaseError = (
     return new HttpError(403, 'RESULTS_NOT_PUBLISHED', 'Results are not published yet');
   }
 
+  if (error.message.includes('SEASON_NOT_FOUND')) {
+    return new HttpError(404, 'SEASON_NOT_FOUND', 'Season not found');
+  }
+
+  if (error.message.includes('AUTH_REQUIRED')) {
+    return new HttpError(401, 'AUTH_REQUIRED', 'Authentication required');
+  }
+
+  if (error.message.includes('ADMIN_REQUIRED')) {
+    return new HttpError(403, 'ADMIN_REQUIRED', 'Administrator access required');
+  }
+
   if (error.message.includes('VALIDATION_ERROR')) {
     return new HttpError(400, 'VALIDATION_ERROR', 'Invalid request data');
   }

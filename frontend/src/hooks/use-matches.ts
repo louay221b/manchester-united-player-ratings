@@ -14,10 +14,13 @@ import {
 import type { FinishMatchPayload, MatchFilters, MatchPayload } from '../types/match';
 import {
   adminMatchResultsQueryKey,
+  adminSeasonStatisticsBaseQueryKey,
+  activeSeasonRankingBaseQueryKey,
   matchLineupQueryKey,
   matchQueryKey,
   matchResultsQueryKey,
   matchesQueryKey,
+  seasonRankingBaseQueryKey,
   votingBallotQueryKey,
   votingMatchesQueryKey,
 } from './query-keys';
@@ -51,6 +54,15 @@ export const useMatchMutations = () => {
     void queryClient.invalidateQueries({ queryKey: adminMatchResultsQueryKey(matchId) });
   };
 
+  const invalidateAdminStatistics = (seasonId: string) => {
+    void queryClient.invalidateQueries({ queryKey: adminSeasonStatisticsBaseQueryKey(seasonId) });
+  };
+
+  const invalidatePublicRankings = (seasonId: string) => {
+    void queryClient.invalidateQueries({ queryKey: seasonRankingBaseQueryKey(seasonId) });
+    void queryClient.invalidateQueries({ queryKey: activeSeasonRankingBaseQueryKey });
+  };
+
   return {
     createMatch: useMutation({
       mutationFn: createMatchRequest,
@@ -81,6 +93,7 @@ export const useMatchMutations = () => {
       onSuccess: (match) => {
         invalidateMatchCollections();
         invalidateMatch(match.id);
+        invalidateAdminStatistics(match.seasonId);
       },
     }),
     publishMatchResults: useMutation({
@@ -88,6 +101,8 @@ export const useMatchMutations = () => {
       onSuccess: (match) => {
         invalidateMatchCollections();
         invalidateMatch(match.id);
+        invalidatePublicRankings(match.seasonId);
+        invalidateAdminStatistics(match.seasonId);
       },
     }),
     unpublishMatchResults: useMutation({
@@ -95,6 +110,8 @@ export const useMatchMutations = () => {
       onSuccess: (match) => {
         invalidateMatchCollections();
         invalidateMatch(match.id);
+        invalidatePublicRankings(match.seasonId);
+        invalidateAdminStatistics(match.seasonId);
       },
     }),
   };
