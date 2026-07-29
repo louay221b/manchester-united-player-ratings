@@ -5,12 +5,15 @@ import { HttpError } from '../utils/http-error.js';
 
 export const errorMiddleware: ErrorRequestHandler = (error, _request, response, _next) => {
   if (error instanceof HttpError) {
+    const errorBody = {
+      code: error.code,
+      message: error.message,
+      ...(error.details === undefined ? {} : { details: error.details }),
+    };
+
     response.status(error.statusCode).json({
       success: false,
-      error: {
-        code: error.code,
-        message: error.message,
-      },
+      error: errorBody,
     });
     return;
   }
@@ -21,6 +24,10 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Invalid request data',
+        details: error.issues.map((issue) => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+        })),
       },
     });
     return;
@@ -29,7 +36,7 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
   response.status(500).json({
     success: false,
     error: {
-      code: 'INTERNAL_SERVER_ERROR',
+      code: 'INTERNAL_ERROR',
       message: 'An unexpected error occurred',
     },
   });
