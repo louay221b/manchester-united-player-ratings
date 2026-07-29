@@ -2,18 +2,13 @@ import { Link, Outlet, useNavigate } from 'react-router';
 
 import { NavLinkItem } from '../components/NavLinkItem';
 import { useAuth } from '../contexts/useAuth';
-import { matches } from '../data/mockData';
 import { AccessDeniedPage } from '../pages/AccessDeniedPage';
-
-const firstMatchId = matches[0]?.id ?? '';
 
 const links = [
   { to: '/admin', label: 'Tableau de bord', end: true },
   { to: '/admin/seasons', label: 'Saisons' },
   { to: '/admin/players', label: 'Joueurs' },
   { to: '/admin/matches', label: 'Matchs' },
-  { to: `/admin/matches/${firstMatchId}/lineup`, label: 'Composition' },
-  { to: `/admin/matches/${firstMatchId}/votes`, label: 'Votes' },
   { to: '/admin/statistics', label: 'Statistiques' },
 ];
 

@@ -12,6 +12,7 @@ import {
   setMatchResultsPublication,
   updateMatch,
 } from '../services/matches.service.js';
+import { getMatchResults as getAggregatedMatchResults } from '../services/voting.service.js';
 import {
   createMatchSchema,
   finishMatchSchema,
@@ -58,6 +59,34 @@ export const getMatch: RequestHandler = async (request, response, next) => {
     response.json({
       success: true,
       data: match,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPublishedMatchResults: RequestHandler = async (request, response, next) => {
+  try {
+    const matchId = parseUuidParam(request.params.matchId, 'match');
+    const results = await getAggregatedMatchResults(getAuthenticatedClient(request), matchId);
+
+    response.json({
+      success: true,
+      data: results,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminMatchResults: RequestHandler = async (request, response, next) => {
+  try {
+    const matchId = parseUuidParam(request.params.matchId, 'match');
+    const results = await getAggregatedMatchResults(getAuthenticatedClient(request), matchId);
+
+    response.json({
+      success: true,
+      data: results,
     });
   } catch (error) {
     next(error);

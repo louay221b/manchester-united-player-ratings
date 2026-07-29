@@ -1,5 +1,5 @@
 import { Eye, EyeOff, ListChecks, Pencil, Plus, SquareCheckBig, Trash2 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useState } from 'react';
 
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
@@ -47,6 +47,14 @@ const formatScore = (match: Match) => {
 
 export function AdminMatchesPage() {
   const [page] = useState(1);
+  const location = useLocation();
+  const routeMessage =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'message' in location.state &&
+    typeof location.state.message === 'string'
+      ? location.state.message
+      : null;
   const matchesQuery = useMatches({ page, limit: pageSize });
   const seasonsQuery = useSeasons();
   const {
@@ -199,6 +207,12 @@ export function AdminMatchesPage() {
           </button>
         }
       />
+
+      {routeMessage ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          {routeMessage}
+        </div>
+      ) : null}
 
       {notification ? (
         <div

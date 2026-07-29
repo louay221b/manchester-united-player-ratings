@@ -32,13 +32,13 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'matches', element: <MatchesPage /> },
       { path: 'matches/:matchId', element: <MatchDetailsPage /> },
-      { path: 'matches/:matchId/results', element: <MatchResultsPage /> },
       { path: 'ranking', element: <RankingPage /> },
       { path: 'players/:playerId', element: <PlayerProfilePage /> },
       {
         element: <ProtectedRoute />,
         children: [
           { path: 'matches/:matchId/vote', element: <PlayerVotePage /> },
+          { path: 'matches/:matchId/results', element: <MatchResultsPage /> },
         ],
       },
       {

@@ -1,6 +1,6 @@
 import { Save, Trash2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { PageHeader } from '../../components/PageHeader';
@@ -9,6 +9,7 @@ import { usePlayers } from '../../hooks/use-players';
 import { ApiError } from '../../lib/api';
 import type { LineupPlayerPayload, ParticipationStatus } from '../../types/match';
 import type { Player } from '../../types/player';
+import { isUuid } from '../../utils/uuid';
 
 interface LineupFormRow {
   playerId: string;
@@ -36,6 +37,13 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 const toMinuteString = (value: number | null) => (value === null ? '' : String(value));
 
 const toNullableMinute = (value: string) => (value.trim() === '' ? null : Number(value));
+
+const invalidMatchMessage = 'Sélectionnez d’abord un match.';
+
+const formatPlayerOption = (player: Player) =>
+  [player.displayName, player.shirtNumber ? `#${player.shirtNumber}` : null, player.position]
+    .filter(Boolean)
+    .join(' — ');
 
 const getDefaultRow = (playerId: string): LineupFormRow => ({
   playerId,
@@ -102,14 +110,26 @@ const withCalculatedMinutes = (row: LineupFormRow, field: 'enteredMinute' | 'exi
 };
 
 export function AdminMatchLineupPage() {
-  const { matchId } = useParams();
-  const lineupQuery = useMatchLineup(matchId ?? '');
-  const playersQuery = usePlayers({ page: 1, limit: 100, active: true });
+  const { matchId } = useParams<{ matchId: string }>();
+  const navigate = useNavigate();
+  const hasValidMatchId = isUuid(matchId);
+  const safeMatchId = hasValidMatchId ? matchId : '';
+  const lineupQuery = useMatchLineup(safeMatchId);
+  const playersQuery = usePlayers({ page: 1, limit: 100, active: true }, hasValidMatchId);
   const { replaceMatchLineup } = useMatchLineupMutations();
   const [rows, setRows] = useState<LineupFormRow[]>([]);
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
   const [notification, setNotification] = useState<Notification | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hasValidMatchId) {
+      navigate('/admin/matches', {
+        replace: true,
+        state: { message: invalidMatchMessage },
+      });
+    }
+  }, [hasValidMatchId, navigate]);
 
   useEffect(() => {
     if (!lineupQuery.data) {
@@ -219,7 +239,7 @@ export function AdminMatchLineupPage() {
     }));
 
   const handleSave = () => {
-    if (!matchId || isLocked) {
+    if (!hasValidMatchId || isLocked) {
       return;
     }
 
@@ -232,7 +252,7 @@ export function AdminMatchLineupPage() {
 
     setNotification(null);
     replaceMatchLineup.mutate(
-      { matchId, payload: { players: toPayload() } },
+      { matchId: safeMatchId, payload: { players: toPayload() } },
       {
         onSuccess: () => {
           setNotification({ type: 'success', message: 'Composition enregistree.' });
@@ -247,12 +267,12 @@ export function AdminMatchLineupPage() {
     );
   };
 
-  if (!matchId) {
+  if (!hasValidMatchId) {
     return (
       <PageHeader
         eyebrow="Composition"
-        title="Match introuvable"
-        description="Aucun identifiant de match n a ete fourni."
+        title={invalidMatchMessage}
+        description="Retour vers la liste des matchs."
       />
     );
   }
@@ -335,7 +355,7 @@ export function AdminMatchLineupPage() {
               <option value="">Selectionner</option>
               {availablePlayers.map((player) => (
                 <option key={player.id} value={player.id}>
-                  {player.displayName} - {player.position}
+                  {formatPlayerOption(player)}
                 </option>
               ))}
             </select>

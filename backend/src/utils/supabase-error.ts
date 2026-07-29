@@ -37,6 +37,30 @@ export const mapSupabaseError = (
   error: SupabaseErrorLike,
   fallbackMessage = 'Database operation failed',
 ) => {
+  if (error.message.includes('VOTING_CLOSED')) {
+    return new HttpError(409, 'VOTING_CLOSED', 'Voting is closed for this match');
+  }
+
+  if (error.message.includes('PLAYER_NOT_ELIGIBLE')) {
+    return new HttpError(400, 'PLAYER_NOT_ELIGIBLE', 'Player is not eligible for this ballot');
+  }
+
+  if (error.message.includes('INCOMPLETE_BALLOT')) {
+    return new HttpError(
+      400,
+      'INCOMPLETE_BALLOT',
+      'A rating is required for every eligible player',
+    );
+  }
+
+  if (error.message.includes('RESULTS_NOT_PUBLISHED')) {
+    return new HttpError(403, 'RESULTS_NOT_PUBLISHED', 'Results are not published yet');
+  }
+
+  if (error.message.includes('VALIDATION_ERROR')) {
+    return new HttpError(400, 'VALIDATION_ERROR', 'Invalid request data');
+  }
+
   if (
     error.code === '22P02' ||
     error.message.toLowerCase().includes('invalid input syntax for type uuid')

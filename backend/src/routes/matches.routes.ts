@@ -1,9 +1,11 @@
 import { Router } from 'express';
 
 import {
+  getAdminMatchResults,
   getLineup,
   getMatch,
   getMatches,
+  getPublishedMatchResults,
   patchMatch,
   postCloseVoting,
   postFinishMatch,
@@ -19,6 +21,13 @@ import { requireAdmin } from '../middleware/require-admin.middleware.js';
 export const matchesRouter = Router();
 
 matchesRouter.get('/matches', getMatches);
+matchesRouter.get('/matches/:matchId/results', authenticate, getPublishedMatchResults);
+matchesRouter.get(
+  '/admin/matches/:matchId/results',
+  authenticate,
+  requireAdmin,
+  getAdminMatchResults,
+);
 matchesRouter.get('/matches/:matchId', getMatch);
 matchesRouter.post('/matches', authenticate, requireAdmin, postMatch);
 matchesRouter.patch('/matches/:matchId', authenticate, requireAdmin, patchMatch);

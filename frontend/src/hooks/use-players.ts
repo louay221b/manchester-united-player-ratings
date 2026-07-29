@@ -13,10 +13,11 @@ import type { PlayerFilters, PlayerPayload } from '../types/player';
 export const playersQueryKey = ['players'];
 export const playerQueryKey = (playerId: string) => ['player', playerId];
 
-export const usePlayers = (filters: PlayerFilters) =>
+export const usePlayers = (filters: PlayerFilters, enabled = true) =>
   useQuery({
     queryKey: [...playersQueryKey, filters],
     queryFn: () => getPlayers(filters),
+    enabled,
   });
 
 export const usePlayer = (playerId: string) =>

@@ -110,3 +110,89 @@ export interface VotingMatchDetails {
   match: Match;
   eligiblePlayers: MatchLineupPlayer[];
 }
+
+export interface BallotPlayer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  position: string;
+  shirtNumber: number | null;
+  photoUrl: string | null;
+  participationStatus: ParticipationStatus;
+  minutesPlayed: number;
+}
+
+export interface BallotRating {
+  playerId: string;
+  rating: number;
+}
+
+export interface ExistingBallot {
+  ratings: BallotRating[];
+  manOfTheMatchPlayerId: string | null;
+}
+
+export interface VotingBallot {
+  match: {
+    id: string;
+    opponentName: string;
+    competition: string;
+    matchDate: string;
+    manchesterUnitedScore: number | null;
+    opponentScore: number | null;
+    votingStatus: VotingStatus;
+  };
+  players: BallotPlayer[];
+  existingBallot: ExistingBallot | null;
+}
+
+export interface SubmitBallotPayload {
+  ratings: BallotRating[];
+  manOfTheMatchPlayerId: string;
+}
+
+export interface MatchResultRow {
+  playerId: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  photoUrl: string | null;
+  position: string;
+  shirtNumber: number | null;
+  votesCount: number;
+  averageRating: number | null;
+  manOfTheMatchVotes: number;
+  rank: number;
+}
+
+export interface ManOfTheMatchResult {
+  playerId: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  photoUrl: string | null;
+  position: string;
+  shirtNumber: number | null;
+  selections: number;
+}
+
+export interface MatchResults {
+  match: {
+    id: string;
+    opponentName: string;
+    competition: string;
+    matchDate: string;
+    manchesterUnitedScore: number | null;
+    opponentScore: number | null;
+    votingStatus: VotingStatus;
+    resultsPublished: boolean;
+  };
+  summary: {
+    eligiblePlayers: number;
+    usersWhoVoted: number;
+    ratingsCount: number;
+  };
+  ranking: MatchResultRow[];
+  manOfTheMatch: ManOfTheMatchResult[];
+}

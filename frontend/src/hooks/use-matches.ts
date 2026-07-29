@@ -12,7 +12,15 @@ import {
   updateMatch as updateMatchRequest,
 } from '../services/matches-api.service';
 import type { FinishMatchPayload, MatchFilters, MatchPayload } from '../types/match';
-import { matchLineupQueryKey, matchQueryKey, matchesQueryKey, votingMatchesQueryKey } from './query-keys';
+import {
+  adminMatchResultsQueryKey,
+  matchLineupQueryKey,
+  matchQueryKey,
+  matchResultsQueryKey,
+  matchesQueryKey,
+  votingBallotQueryKey,
+  votingMatchesQueryKey,
+} from './query-keys';
 
 export const useMatches = (filters: MatchFilters) =>
   useQuery({
@@ -38,6 +46,9 @@ export const useMatchMutations = () => {
   const invalidateMatch = (matchId: string) => {
     void queryClient.invalidateQueries({ queryKey: matchQueryKey(matchId) });
     void queryClient.invalidateQueries({ queryKey: matchLineupQueryKey(matchId) });
+    void queryClient.invalidateQueries({ queryKey: votingBallotQueryKey(matchId) });
+    void queryClient.invalidateQueries({ queryKey: matchResultsQueryKey(matchId) });
+    void queryClient.invalidateQueries({ queryKey: adminMatchResultsQueryKey(matchId) });
   };
 
   return {

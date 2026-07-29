@@ -8,6 +8,7 @@ import type {
   MatchLineup,
   MatchPagination,
   MatchPayload,
+  MatchResults,
   ReplaceLineupPayload,
 } from '../types/match';
 
@@ -130,6 +131,20 @@ export const unpublishMatchResults = async (matchId: string) => {
   const response = await apiRequest<DataResponse<Match>>(`/api/matches/${matchId}/unpublish-results`, {
     method: 'POST',
   });
+
+  return response.data;
+};
+
+export const getMatchResults = async (matchId: string) => {
+  const response = await apiRequest<DataResponse<MatchResults>>(`/api/matches/${matchId}/results`);
+
+  return response.data;
+};
+
+export const getAdminMatchResults = async (matchId: string) => {
+  const response = await apiRequest<DataResponse<MatchResults>>(
+    `/api/admin/matches/${matchId}/results`,
+  );
 
   return response.data;
 };
