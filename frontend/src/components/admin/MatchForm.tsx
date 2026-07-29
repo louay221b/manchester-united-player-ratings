@@ -137,7 +137,9 @@ export function MatchForm({
           Saison
           <select
             value={form.seasonId}
-            onChange={(event) => setForm((current) => ({ ...current, seasonId: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, seasonId: event.target.value }))
+            }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           >
@@ -186,11 +188,15 @@ export function MatchForm({
           <input
             type="datetime-local"
             value={form.matchDate}
-            onChange={(event) => setForm((current) => ({ ...current, matchDate: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, matchDate: event.target.value }))
+            }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           />
-          {errors.matchDate ? <span className="text-xs text-red-700">{errors.matchDate}</span> : null}
+          {errors.matchDate ? (
+            <span className="text-xs text-red-700">{errors.matchDate}</span>
+          ) : null}
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
@@ -224,7 +230,9 @@ export function MatchForm({
           <input
             type="checkbox"
             checked={form.isHome}
-            onChange={(event) => setForm((current) => ({ ...current, isHome: event.target.checked }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, isHome: event.target.checked }))
+            }
             className="h-4 w-4 accent-united-red"
             disabled={isSubmitting}
           />

@@ -12,11 +12,7 @@ import {
   seasonRankingQueryKey,
 } from './query-keys';
 
-export const useSeasonRanking = (
-  seasonId: string,
-  filters: RankingFilters,
-  enabled = true,
-) =>
+export const useSeasonRanking = (seasonId: string, filters: RankingFilters, enabled = true) =>
   useQuery({
     queryKey: seasonRankingQueryKey(seasonId, filters),
     queryFn: () => getSeasonRanking(seasonId, filters),

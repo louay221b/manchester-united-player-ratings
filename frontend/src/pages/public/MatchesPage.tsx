@@ -88,7 +88,9 @@ export function MatchesPage() {
       />
 
       {matchesQuery.isLoading ? (
-        <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement des matchs...</div>
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">
+          Chargement des matchs...
+        </div>
       ) : null}
 
       {matchesQuery.isError ? (

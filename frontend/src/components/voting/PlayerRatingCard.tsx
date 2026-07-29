@@ -9,7 +9,12 @@ interface PlayerRatingCardProps {
   onChange: (playerId: string, rating: number) => void;
 }
 
-export function PlayerRatingCard({ player, rating, disabled = false, onChange }: PlayerRatingCardProps) {
+export function PlayerRatingCard({
+  player,
+  rating,
+  disabled = false,
+  onChange,
+}: PlayerRatingCardProps) {
   return (
     <section className="panel p-5">
       <div className="grid gap-4 lg:grid-cols-[320px_1fr] lg:items-center">

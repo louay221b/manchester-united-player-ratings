@@ -42,7 +42,9 @@ export function MatchDetailsPage() {
   }
 
   if (matchQuery.isLoading) {
-    return <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du match...</div>;
+    return (
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du match...</div>
+    );
   }
 
   if (matchQuery.isError) {

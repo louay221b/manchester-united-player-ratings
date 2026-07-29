@@ -4,13 +4,33 @@ import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
 import { StatCard } from '../../components/StatCard';
-import { activeSeason, getSeasonPlayerStats, matches, players, votes } from '../../data/mockData';
+import { useMatches } from '../../hooks/use-matches';
+import { usePlayers } from '../../hooks/use-players';
+import { useAdminSeasonStatistics } from '../../hooks/use-season-ranking';
+import { useSeasons } from '../../hooks/use-seasons';
 import { ApiError } from '../../lib/api';
 import { verifyAdminApiAccess } from '../../services/auth-api.service';
+import type { MatchFilters } from '../../types/match';
+import type { PlayerFilters } from '../../types/player';
+import type { AdminStatisticsFilters } from '../../types/ranking';
+
+const allMatchesFilters: MatchFilters = { page: 1, limit: 1 };
+const openMatchesFilters: MatchFilters = { page: 1, limit: 1, votingStatus: 'open' };
+const activePlayersFilters: PlayerFilters = { page: 1, limit: 1, active: true };
+const dashboardStatisticsFilters: AdminStatisticsFilters = { publishedOnly: false };
 
 export function AdminDashboardPage() {
-  const leader = getSeasonPlayerStats()[0];
-  const openVotes = matches.filter((match) => match.voteStatus === 'open').length;
+  const seasonsQuery = useSeasons();
+  const matchesQuery = useMatches(allMatchesFilters);
+  const openMatchesQuery = useMatches(openMatchesFilters);
+  const playersQuery = usePlayers(activePlayersFilters);
+  const activeSeason = seasonsQuery.data?.find((season) => season.status === 'active');
+  const statisticsQuery = useAdminSeasonStatistics(
+    activeSeason?.id ?? '',
+    dashboardStatisticsFilters,
+    Boolean(activeSeason?.id),
+  );
+  const leader = statisticsQuery.data?.ranking.find((row) => row.seasonAverage !== null);
   const [apiStatus, setApiStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [apiMessage, setApiMessage] = useState('');
 
@@ -52,14 +72,18 @@ export function AdminDashboardPage() {
       <PageHeader
         eyebrow="Administration"
         title="Tableau de bord"
-        description="Vue temporaire pour piloter les saisons, les joueurs, les matchs et les votes."
+        description="Vue API pour piloter les saisons, les joueurs, les matchs et les votes."
       />
 
       <section className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Saison active" value={activeSeason.name.replace('Saison ', '')} />
-        <StatCard label="Joueurs" value={players.length} />
-        <StatCard label="Matchs" value={matches.length} />
-        <StatCard label="Votes" value={votes.length} helper={`${openVotes} matchs ouverts`} />
+        <StatCard label="Saison active" value={activeSeason?.name ?? '—'} />
+        <StatCard label="Joueurs actifs" value={playersQuery.data?.pagination.total ?? '—'} />
+        <StatCard label="Matchs" value={matchesQuery.data?.pagination.total ?? '—'} />
+        <StatCard
+          label="Votes ouverts"
+          value={openMatchesQuery.data?.pagination.total ?? '—'}
+          helper="Matchs ouverts au vote"
+        />
       </section>
 
       <section
@@ -84,6 +108,17 @@ export function AdminDashboardPage() {
         </p>
       </section>
 
+      {(seasonsQuery.isError ||
+        playersQuery.isError ||
+        matchesQuery.isError ||
+        openMatchesQuery.isError ||
+        statisticsQuery.isError) && (
+        <section className="panel border-red-200 bg-red-50 p-5 text-sm font-semibold text-red-700">
+          Certaines donnees du tableau de bord sont indisponibles. Verifie l API et la session
+          administrateur.
+        </section>
+      )}
+
       <section className="grid gap-4 lg:grid-cols-4">
         <Link
           to="/admin/matches"
@@ -92,7 +127,9 @@ export function AdminDashboardPage() {
           <CalendarDays className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
             <span className="block font-black text-zinc-950">Matchs</span>
-            <span className="mt-1 block text-sm text-zinc-500">Scores, statuts et adversaires.</span>
+            <span className="mt-1 block text-sm text-zinc-500">
+              Scores, statuts et adversaires.
+            </span>
           </span>
         </Link>
         <Link
@@ -118,7 +155,9 @@ export function AdminDashboardPage() {
         <article className="panel flex items-start gap-4 p-5">
           <Trophy className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
-            <span className="block font-black text-zinc-950">{leader?.player.displayName ?? '-'}</span>
+            <span className="block font-black text-zinc-950">
+              {leader ? `${leader.firstName} ${leader.lastName}` : '—'}
+            </span>
             <span className="mt-1 block text-sm text-zinc-500">Leader actuel</span>
           </span>
         </article>

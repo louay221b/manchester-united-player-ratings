@@ -5,7 +5,12 @@ import {
   replaceMatchLineup as replaceMatchLineupRequest,
 } from '../services/matches-api.service';
 import type { ReplaceLineupPayload } from '../types/match';
-import { matchLineupQueryKey, matchQueryKey, matchesQueryKey, votingMatchesQueryKey } from './query-keys';
+import {
+  matchLineupQueryKey,
+  matchQueryKey,
+  matchesQueryKey,
+  votingMatchesQueryKey,
+} from './query-keys';
 
 export const useMatchLineup = (matchId: string) =>
   useQuery({

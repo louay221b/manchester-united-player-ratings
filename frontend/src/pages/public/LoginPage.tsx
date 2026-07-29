@@ -62,7 +62,7 @@ export function LoginPage() {
         title="Connexion"
         description="Connecte-toi avec ton compte Supabase pour acceder aux votes et aux espaces proteges."
       />
-      <form onSubmit={handleSubmit} className="panel space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
         <label className="block">
           <span className="text-sm font-bold text-zinc-700">Email</span>
           <input

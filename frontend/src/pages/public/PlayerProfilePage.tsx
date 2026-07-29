@@ -68,7 +68,10 @@ export function PlayerProfilePage() {
         <PageHeader
           eyebrow="Joueur"
           title={isNotFound ? 'Joueur introuvable' : 'Profil indisponible'}
-          description={getErrorMessage(playerQuery.error, 'Impossible de charger ce profil joueur.')}
+          description={getErrorMessage(
+            playerQuery.error,
+            'Impossible de charger ce profil joueur.',
+          )}
         />
         <div className="flex flex-wrap gap-2">
           <button

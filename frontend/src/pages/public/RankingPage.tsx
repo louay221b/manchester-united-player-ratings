@@ -18,7 +18,8 @@ export function RankingPage() {
   const [filters, setFilters] = useState<RankingFiltersState>({});
   const seasonsQuery = useSeasons();
   const seasons = seasonsQuery.data ?? [];
-  const defaultSeasonId = seasons.find((season) => season.status === 'active')?.id ?? seasons[0]?.id ?? '';
+  const defaultSeasonId =
+    seasons.find((season) => season.status === 'active')?.id ?? seasons[0]?.id ?? '';
   const selectedSeasonId = manualSeasonId ?? defaultSeasonId;
   const rankingQuery = useSeasonRanking(selectedSeasonId, filters, Boolean(selectedSeasonId));
   const rankingRows = rankingQuery.data?.ranking ?? [];

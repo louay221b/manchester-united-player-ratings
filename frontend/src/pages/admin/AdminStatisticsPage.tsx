@@ -23,7 +23,8 @@ export function AdminStatisticsPage() {
   });
   const seasonsQuery = useSeasons();
   const seasons = seasonsQuery.data ?? [];
-  const defaultSeasonId = seasons.find((season) => season.status === 'active')?.id ?? seasons[0]?.id ?? '';
+  const defaultSeasonId =
+    seasons.find((season) => season.status === 'active')?.id ?? seasons[0]?.id ?? '';
   const selectedSeasonId = manualSeasonId ?? defaultSeasonId;
   const statisticsQuery = useAdminSeasonStatistics(
     selectedSeasonId,

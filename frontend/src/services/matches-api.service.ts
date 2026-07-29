@@ -103,10 +103,13 @@ export const replaceMatchLineup = async (matchId: string, payload: ReplaceLineup
 };
 
 export const finishMatch = async (matchId: string, payload: FinishMatchPayload) => {
-  const response = await apiRequest<DataResponse<FinishMatchResult>>(`/api/matches/${matchId}/finish`, {
-    method: 'POST',
-    body: payload,
-  });
+  const response = await apiRequest<DataResponse<FinishMatchResult>>(
+    `/api/matches/${matchId}/finish`,
+    {
+      method: 'POST',
+      body: payload,
+    },
+  );
 
   return response.data;
 };
@@ -120,17 +123,23 @@ export const closeMatchVoting = async (matchId: string) => {
 };
 
 export const publishMatchResults = async (matchId: string) => {
-  const response = await apiRequest<DataResponse<Match>>(`/api/matches/${matchId}/publish-results`, {
-    method: 'POST',
-  });
+  const response = await apiRequest<DataResponse<Match>>(
+    `/api/matches/${matchId}/publish-results`,
+    {
+      method: 'POST',
+    },
+  );
 
   return response.data;
 };
 
 export const unpublishMatchResults = async (matchId: string) => {
-  const response = await apiRequest<DataResponse<Match>>(`/api/matches/${matchId}/unpublish-results`, {
-    method: 'POST',
-  });
+  const response = await apiRequest<DataResponse<Match>>(
+    `/api/matches/${matchId}/unpublish-results`,
+    {
+      method: 'POST',
+    },
+  );
 
   return response.data;
 };

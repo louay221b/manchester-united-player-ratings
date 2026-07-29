@@ -90,7 +90,11 @@ const getDefaultRowForStatus = (
   };
 };
 
-const withCalculatedMinutes = (row: LineupFormRow, field: 'enteredMinute' | 'exitedMinute', value: string) => {
+const withCalculatedMinutes = (
+  row: LineupFormRow,
+  field: 'enteredMinute' | 'exitedMinute',
+  value: string,
+) => {
   const nextRow = { ...row, [field]: value };
   const enteredMinute = toNullableMinute(nextRow.enteredMinute);
   const exitedMinute = toNullableMinute(nextRow.exitedMinute);
@@ -225,7 +229,9 @@ export function AdminMatchLineupPage() {
       );
     });
 
-    return invalidRow ? 'Corrige les minutes, le statut ou l eligibilite avant d enregistrer.' : null;
+    return invalidRow
+      ? 'Corrige les minutes, le statut ou l eligibilite avant d enregistrer.'
+      : null;
   };
 
   const toPayload = (): LineupPlayerPayload[] =>
@@ -374,7 +380,9 @@ export function AdminMatchLineupPage() {
 
       <section className="panel overflow-hidden">
         {rows.length === 0 ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Aucun joueur dans la composition.</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">
+            Aucun joueur dans la composition.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-zinc-200">
@@ -393,8 +401,9 @@ export function AdminMatchLineupPage() {
                 {rows.map((row) => {
                   const player = playersById.get(row.playerId);
                   const apiPlayer =
-                    lineupData.players.find((lineupPlayer) => lineupPlayer.playerId === row.playerId)
-                      ?.player ?? null;
+                    lineupData.players.find(
+                      (lineupPlayer) => lineupPlayer.playerId === row.playerId,
+                    )?.player ?? null;
 
                   return (
                     <tr key={row.playerId}>
@@ -409,7 +418,10 @@ export function AdminMatchLineupPage() {
                           value={row.participationStatus}
                           onChange={(event) =>
                             updateRow(row.playerId, (current) =>
-                              getDefaultRowForStatus(current, event.target.value as ParticipationStatus),
+                              getDefaultRowForStatus(
+                                current,
+                                event.target.value as ParticipationStatus,
+                              ),
                             )
                           }
                           className="focus-ring min-w-44 rounded-md border border-zinc-300 px-3 py-2"

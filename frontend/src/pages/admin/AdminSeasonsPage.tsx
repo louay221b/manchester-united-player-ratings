@@ -190,7 +190,9 @@ export function AdminSeasonsPage() {
         ) : null}
 
         {seasonsQuery.isSuccess && seasonsQuery.data.length === 0 ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Aucune saison pour le moment.</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">
+            Aucune saison pour le moment.
+          </div>
         ) : null}
 
         {seasonsQuery.isSuccess && seasonsQuery.data.length > 0 ? (

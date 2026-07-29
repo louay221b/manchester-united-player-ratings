@@ -118,18 +118,25 @@ export function MatchResultsPage() {
         </article>
         <article className="panel p-5">
           <p className="text-sm font-semibold text-zinc-500">Joueurs eligibles</p>
-          <p className="mt-2 text-3xl font-black text-zinc-950">{results.summary.eligiblePlayers}</p>
+          <p className="mt-2 text-3xl font-black text-zinc-950">
+            {results.summary.eligiblePlayers}
+          </p>
         </article>
       </section>
 
       <section className="panel p-5">
         <h2 className="text-xl font-black text-zinc-950">Homme du match</h2>
         {results.manOfTheMatch.length === 0 ? (
-          <p className="mt-3 text-sm font-semibold text-zinc-600">Aucune selection pour le moment.</p>
+          <p className="mt-3 text-sm font-semibold text-zinc-600">
+            Aucune selection pour le moment.
+          </p>
         ) : (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {results.manOfTheMatch.map((player) => (
-              <article key={player.playerId} className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3">
+              <article
+                key={player.playerId}
+                className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3"
+              >
                 <ApiPlayerAvatar player={player} size="sm" />
                 <div>
                   <p className="font-black text-zinc-950">{player.displayName}</p>

@@ -1,4 +1,13 @@
-import { ChevronLeft, ChevronRight, Pencil, Plus, Power, RotateCcw, Search, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Power,
+  RotateCcw,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
@@ -59,10 +68,7 @@ export function AdminPlayersPage() {
     () => ({
       search,
       position: position || undefined,
-      active:
-        activeFilter === 'all'
-          ? undefined
-          : activeFilter === 'active',
+      active: activeFilter === 'all' ? undefined : activeFilter === 'active',
       page,
       limit: pageSize,
     }),
@@ -208,8 +214,8 @@ export function AdminPlayersPage() {
       {deleteConflictPlayer ? (
         <section className="panel flex flex-col gap-3 border-amber-200 bg-amber-50 p-4 text-amber-900 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold">
-            {deleteConflictPlayer.displayName} possede un historique. Desactive-le pour le masquer sans
-            supprimer ses donnees.
+            {deleteConflictPlayer.displayName} possede un historique. Desactive-le pour le masquer
+            sans supprimer ses donnees.
           </p>
           <button
             type="button"
@@ -331,7 +337,9 @@ export function AdminPlayersPage() {
                           {player.displayName}
                         </span>
                       </td>
-                      <td className="table-cell">{player.shirtNumber ? `#${player.shirtNumber}` : '-'}</td>
+                      <td className="table-cell">
+                        {player.shirtNumber ? `#${player.shirtNumber}` : '-'}
+                      </td>
                       <td className="table-cell">{player.position}</td>
                       <td className="table-cell">
                         <span

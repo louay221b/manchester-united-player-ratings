@@ -128,11 +128,15 @@ export function SeasonForm({
           <input
             type="date"
             value={form.startDate}
-            onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, startDate: event.target.value }))
+            }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           />
-          {errors.startDate ? <span className="text-xs text-red-700">{errors.startDate}</span> : null}
+          {errors.startDate ? (
+            <span className="text-xs text-red-700">{errors.startDate}</span>
+          ) : null}
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
@@ -140,7 +144,9 @@ export function SeasonForm({
           <input
             type="date"
             value={form.endDate}
-            onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, endDate: event.target.value }))
+            }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           />

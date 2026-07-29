@@ -71,7 +71,7 @@ export function RegisterPage() {
         title="Inscription"
         description="Cree ton compte Supabase. Le profil recevra automatiquement le role user."
       />
-      <form onSubmit={handleSubmit} className="panel space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
         <label className="block">
           <span className="text-sm font-bold text-zinc-700">Nom complet</span>
           <input

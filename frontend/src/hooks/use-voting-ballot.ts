@@ -33,7 +33,9 @@ export const useVotingBallotMutations = () => {
         const votingMatch = queryClient.getQueryData<VotingMatchDetails>(
           votingMatchQueryKey(variables.matchId),
         );
-        const matchDetails = queryClient.getQueryData<MatchDetails>(matchQueryKey(variables.matchId));
+        const matchDetails = queryClient.getQueryData<MatchDetails>(
+          matchQueryKey(variables.matchId),
+        );
         const seasonId = votingMatch?.match.seasonId ?? matchDetails?.seasonId;
 
         if (seasonId) {

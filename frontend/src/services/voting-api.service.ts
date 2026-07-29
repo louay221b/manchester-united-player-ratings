@@ -1,10 +1,5 @@
 import { apiRequest } from '../lib/api';
-import type {
-  Match,
-  SubmitBallotPayload,
-  VotingBallot,
-  VotingMatchDetails,
-} from '../types/match';
+import type { Match, SubmitBallotPayload, VotingBallot, VotingMatchDetails } from '../types/match';
 
 interface DataResponse<T> {
   success: true;
@@ -18,7 +13,9 @@ export const getVotingMatches = async () => {
 };
 
 export const getVotingMatch = async (matchId: string) => {
-  const response = await apiRequest<DataResponse<VotingMatchDetails>>(`/api/voting/matches/${matchId}`);
+  const response = await apiRequest<DataResponse<VotingMatchDetails>>(
+    `/api/voting/matches/${matchId}`,
+  );
 
   return response.data;
 };

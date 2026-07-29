@@ -1,6 +1,6 @@
 # Supabase Schema
 
-This folder contains the initial database schema for Manchester United Player Ratings.
+This folder contains the database schema for Manchester United Player Ratings.
 
 It does not contain Supabase keys, does not configure frontend authentication, and does not create production data.
 
@@ -17,14 +17,12 @@ It does not contain Supabase keys, does not configure frontend authentication, a
 2. Select SQL Editor in the left navigation.
 3. Create a new query.
 
-## Run the Initial Schema
+## Run the Migrations
 
-1. Open `supabase/migrations/001_initial_schema.sql`.
-2. Copy the full SQL content.
-3. Paste it into Supabase SQL Editor.
-4. Run the query.
+Run every SQL migration in filename order. Do not edit an already applied migration.
 
-The migration creates the enum types, tables, functions, triggers, RLS policies, indexes, and statistics views.
+The migrations create enum types, tables, functions, triggers, RLS policies, indexes, aggregate
+views, voting RPCs, Manchester United squad seed data, and season ranking RPCs.
 
 ## Run the Seed Separately
 
@@ -35,7 +33,8 @@ The seed is optional development data. It is not part of the migration.
 3. Paste it into SQL Editor after the schema has succeeded.
 4. Run the query.
 
-The seed inserts one demo season, three fictitious players, two fictitious matches, and match participations. It does not insert Auth users or votes.
+The seed inserts one development season only. It does not insert Auth users, players, matches,
+lineups, votes, or results.
 
 ## Verify the Tables
 
@@ -71,6 +70,19 @@ Expected views:
 
 - `player_match_ratings`
 - `season_player_statistics`
+
+Verify ranking functions:
+
+```sql
+select routine_name
+from information_schema.routines
+where specific_schema = 'public'
+  and routine_name in (
+    'get_public_season_rankings',
+    'get_admin_season_statistics'
+  )
+order by routine_name;
+```
 
 Verify RLS:
 

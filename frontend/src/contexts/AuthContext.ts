@@ -31,11 +31,7 @@ export interface AuthContextValue {
   authError: string | null;
   profileError: string | null;
   signIn: (email: string, password: string) => Promise<AuthActionResult>;
-  signUp: (input: {
-    fullName: string;
-    email: string;
-    password: string;
-  }) => Promise<SignUpResult>;
+  signUp: (input: { fullName: string; email: string; password: string }) => Promise<SignUpResult>;
   signOut: () => Promise<AuthActionResult>;
   refreshProfile: () => Promise<void>;
 }

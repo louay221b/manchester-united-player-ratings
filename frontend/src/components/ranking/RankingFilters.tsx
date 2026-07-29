@@ -74,9 +74,7 @@ export function RankingFilters({
       ) : null}
 
       <label className="space-y-2">
-        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
-          Minimum MJ
-        </span>
+        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Minimum MJ</span>
         <input
           type="number"
           min={0}

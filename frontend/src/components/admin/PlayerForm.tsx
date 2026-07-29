@@ -134,7 +134,9 @@ export function PlayerForm({
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           />
-          {errors.firstName ? <span className="text-xs text-red-700">{errors.firstName}</span> : null}
+          {errors.firstName ? (
+            <span className="text-xs text-red-700">{errors.firstName}</span>
+          ) : null}
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
@@ -201,7 +203,9 @@ export function PlayerForm({
           <input
             type="date"
             value={form.joinedAt}
-            onChange={(event) => setForm((current) => ({ ...current, joinedAt: event.target.value }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, joinedAt: event.target.value }))
+            }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isSubmitting}
           />
@@ -223,7 +227,9 @@ export function PlayerForm({
           <input
             type="checkbox"
             checked={form.active}
-            onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, active: event.target.checked }))
+            }
             className="h-4 w-4 accent-united-red"
             disabled={isSubmitting}
           />

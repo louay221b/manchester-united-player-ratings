@@ -45,7 +45,10 @@ export function PlayerVotePage() {
 
     queueMicrotask(() => {
       const existingRatings = Object.fromEntries(
-        ballotQuery.data.existingBallot?.ratings.map((rating) => [rating.playerId, rating.rating]) ?? [],
+        ballotQuery.data.existingBallot?.ratings.map((rating) => [
+          rating.playerId,
+          rating.rating,
+        ]) ?? [],
       );
 
       setRatings(existingRatings);
@@ -64,7 +67,9 @@ export function PlayerVotePage() {
   }
 
   if (ballotQuery.isLoading) {
-    return <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du vote...</div>;
+    return (
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du vote...</div>
+    );
   }
 
   if (ballotQuery.isError) {
@@ -107,7 +112,8 @@ export function PlayerVotePage() {
   const ratedCount = ballot.players.filter((player) => ratings[player.id]).length;
   const hasCompleteRatings = ratedCount === ballot.players.length && ballot.players.length > 0;
   const hasManOfTheMatch = Boolean(manOfTheMatchPlayerId);
-  const canSubmit = hasCompleteRatings && hasManOfTheMatch && !isVotingClosed && !submitBallot.isPending;
+  const canSubmit =
+    hasCompleteRatings && hasManOfTheMatch && !isVotingClosed && !submitBallot.isPending;
   const hasExistingBallot = Boolean(ballot.existingBallot);
 
   const handleSubmit = () => {
