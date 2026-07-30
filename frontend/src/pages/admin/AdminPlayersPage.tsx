@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  ImagePlus,
   Pencil,
   Plus,
   Power,
@@ -9,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
@@ -292,14 +294,23 @@ export function AdminPlayersPage() {
         title="Gestion des joueurs"
         description="Effectif stocke dans Supabase. Les suppressions conservent l historique des matchs."
         action={
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Ajouter
-          </button>
+          <>
+            <Link
+              to="/admin/players/photos"
+              className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:border-united-red hover:text-united-red"
+            >
+              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+              Gerer les photos
+            </Link>
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Ajouter
+            </button>
+          </>
         }
       />
 

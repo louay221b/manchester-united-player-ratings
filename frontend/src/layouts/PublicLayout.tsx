@@ -1,6 +1,7 @@
-import { Shield } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router';
 
+import { BrandLogo } from '../components/layout/BrandLogo';
+import { Footer } from '../components/layout/Footer';
 import { NavLinkItem } from '../components/NavLinkItem';
 import { useAuth } from '../contexts/useAuth';
 
@@ -32,14 +33,12 @@ export function PublicLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100">
+    <div className="flex min-h-screen flex-col bg-zinc-100">
       <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link to="/" className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-united-red text-white">
-                <Shield size={24} aria-hidden="true" />
-              </span>
+              <BrandLogo />
               <span>
                 <span className="block text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
                   Manchester United
@@ -76,9 +75,10 @@ export function PublicLayout() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }

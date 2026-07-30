@@ -9,6 +9,7 @@ import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminMatchLineupPage } from '../pages/admin/AdminMatchLineupPage';
 import { AdminMatchVotesPage } from '../pages/admin/AdminMatchVotesPage';
 import { AdminMatchesPage } from '../pages/admin/AdminMatchesPage';
+import { AdminPlayerPhotosPage } from '../pages/admin/AdminPlayerPhotosPage';
 import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
 import { AdminSeasonsPage } from '../pages/admin/AdminSeasonsPage';
 import { AdminStatisticsPage } from '../pages/admin/AdminStatisticsPage';
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
               { index: true, element: <AdminDashboardPage /> },
               { path: 'seasons', element: <AdminSeasonsPage /> },
               { path: 'players', element: <AdminPlayersPage /> },
+              { path: 'players/photos', element: <AdminPlayerPhotosPage /> },
               { path: 'matches', element: <AdminMatchesPage /> },
               { path: 'matches/:matchId/lineup', element: <AdminMatchLineupPage /> },
               { path: 'matches/:matchId/votes', element: <AdminMatchVotesPage /> },

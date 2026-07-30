@@ -59,6 +59,15 @@ export function AdminLayout() {
         >
           Deconnexion
         </button>
+        <div className="mt-4 border-t border-zinc-200 px-3 pt-4 text-xs font-semibold text-zinc-500">
+          <p>Developpe par Ing. Louay Tanazefti</p>
+          <a
+            href="mailto:tanazeftilouay@gmail.com"
+            className="focus-ring mt-1 inline-flex rounded-md text-united-red hover:text-red-800"
+          >
+            tanazeftilouay@gmail.com
+          </a>
+        </div>
       </aside>
       <section>
         <Outlet />
