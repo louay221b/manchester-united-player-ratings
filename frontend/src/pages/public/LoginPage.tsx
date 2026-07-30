@@ -103,6 +103,12 @@ export function LoginPage() {
             Creer un compte
           </Link>
         </p>
+        <Link
+          to="/forgot-password"
+          className="inline-flex text-sm font-black text-united-red hover:text-red-800"
+        >
+          Mot de passe oublie ?
+        </Link>
       </form>
     </div>
   );

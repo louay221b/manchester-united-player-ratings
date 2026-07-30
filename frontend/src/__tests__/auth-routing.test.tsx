@@ -171,6 +171,7 @@ describe('public navigation', () => {
 
     expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Connexion' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Profil' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Deconnexion' })).toBeInTheDocument();
   });
 
@@ -187,6 +188,40 @@ describe('public navigation', () => {
     renderPublicLayout();
 
     expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Profil' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Deconnexion' })).toBeInTheDocument();
+  });
+
+  it('refreshes the displayed navigation name from the profile state', () => {
+    authState = {
+      isAuthenticated: true,
+      isLoading: false,
+      role: 'user',
+      profile: { full_name: 'Old Name', role: 'user' },
+      profileError: null,
+      user: { email: 'user@example.com' },
+    };
+
+    const { rerender } = renderPublicLayout();
+
+    expect(screen.getByText('Old Name')).toBeInTheDocument();
+
+    authState = {
+      ...authState,
+      profile: { full_name: 'New Name', role: 'user' },
+    };
+
+    rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<div>Accueil</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('New Name')).toBeInTheDocument();
+    expect(screen.queryByText('Old Name')).not.toBeInTheDocument();
   });
 });

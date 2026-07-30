@@ -1,4 +1,7 @@
-import type { Request, Response } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
+
+import { updateOwnProfileSchema } from '../schemas/auth.schema.js';
+import { updateOwnProfile } from '../services/auth.service.js';
 
 export const getCurrentApiUser = (request: Request, response: Response) => {
   const auth = request.auth;
@@ -28,4 +31,31 @@ export const getCurrentApiUser = (request: Request, response: Response) => {
       },
     },
   });
+};
+
+export const patchCurrentProfile: RequestHandler = async (request, response, next) => {
+  try {
+    if (!request.auth) {
+      response.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTH_REQUIRED',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    const body = updateOwnProfileSchema.parse(request.body);
+    const profile = await updateOwnProfile(request.auth.supabase, body);
+
+    response.json({
+      success: true,
+      data: {
+        profile,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };

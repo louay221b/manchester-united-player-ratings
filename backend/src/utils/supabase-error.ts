@@ -65,6 +65,10 @@ export const mapSupabaseError = (
     return new HttpError(401, 'AUTH_REQUIRED', 'Authentication required');
   }
 
+  if (error.message.includes('PROFILE_NOT_FOUND')) {
+    return new HttpError(404, 'PROFILE_NOT_FOUND', 'User profile was not found');
+  }
+
   if (error.message.includes('ADMIN_REQUIRED')) {
     return new HttpError(403, 'ADMIN_REQUIRED', 'Administrator access required');
   }

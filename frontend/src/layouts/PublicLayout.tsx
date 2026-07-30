@@ -16,6 +16,7 @@ export function PublicLayout() {
   const displayName = profile?.full_name || user?.email || 'Compte';
   const links = [
     ...baseLinks,
+    ...(isAuthenticated && !isLoading ? [{ to: '/profile', label: 'Profil' }] : []),
     ...(role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
     ...(!isAuthenticated && !isLoading
       ? [

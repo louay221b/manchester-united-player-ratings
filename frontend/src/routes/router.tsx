@@ -13,14 +13,17 @@ import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
 import { AdminSeasonsPage } from '../pages/admin/AdminSeasonsPage';
 import { AdminStatisticsPage } from '../pages/admin/AdminStatisticsPage';
 import { HomePage } from '../pages/public/HomePage';
+import { ForgotPasswordPage } from '../pages/public/ForgotPasswordPage';
 import { LoginPage } from '../pages/public/LoginPage';
 import { MatchDetailsPage } from '../pages/public/MatchDetailsPage';
 import { MatchesPage } from '../pages/public/MatchesPage';
 import { MatchResultsPage } from '../pages/public/MatchResultsPage';
 import { PlayerProfilePage } from '../pages/public/PlayerProfilePage';
 import { PlayerVotePage } from '../pages/public/PlayerVotePage';
+import { ProfilePage } from '../pages/public/ProfilePage';
 import { RankingPage } from '../pages/public/RankingPage';
 import { RegisterPage } from '../pages/public/RegisterPage';
+import { ResetPasswordPage } from '../pages/public/ResetPasswordPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -34,9 +37,12 @@ export const router = createBrowserRouter([
       { path: 'matches/:matchId', element: <MatchDetailsPage /> },
       { path: 'ranking', element: <RankingPage /> },
       { path: 'players/:playerId', element: <PlayerProfilePage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
       {
         element: <ProtectedRoute />,
         children: [
+          { path: 'profile', element: <ProfilePage /> },
           { path: 'matches/:matchId/vote', element: <PlayerVotePage /> },
           { path: 'matches/:matchId/results', element: <MatchResultsPage /> },
         ],

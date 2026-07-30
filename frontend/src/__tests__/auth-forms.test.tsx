@@ -44,6 +44,15 @@ describe('auth forms', () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it('shows a forgot-password link on login', () => {
+    renderWithRouter(<LoginPage />);
+
+    expect(screen.getByRole('link', { name: 'Mot de passe oublie ?' })).toHaveAttribute(
+      'href',
+      '/forgot-password',
+    );
+  });
+
   it('shows a readable registration error for password mismatch', () => {
     renderWithRouter(<RegisterPage />);
 
