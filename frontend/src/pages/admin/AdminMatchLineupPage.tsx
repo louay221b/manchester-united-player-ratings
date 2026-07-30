@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { useMatchLineup, useMatchLineupMutations } from '../../hooks/use-match-lineup';
 import { usePlayers } from '../../hooks/use-players';
@@ -321,12 +322,19 @@ export function AdminMatchLineupPage() {
         title={`Manchester United vs ${match.opponentName}`}
         description="Titulaires, remplacants entres, remplacants non utilises et eligibilite au vote."
         action={
-          <Link
-            to="/admin/matches"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-          >
-            Retour aux matchs
-          </Link>
+          <>
+            <OpponentLogo
+              opponentName={match.opponentName}
+              logoUrl={match.opponentLogoUrl}
+              size="md"
+            />
+            <Link
+              to="/admin/matches"
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
+            >
+              Retour aux matchs
+            </Link>
+          </>
         }
       />
 

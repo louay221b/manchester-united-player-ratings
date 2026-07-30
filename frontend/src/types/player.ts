@@ -6,6 +6,7 @@ export interface Player {
   shirtNumber: number | null;
   position: string;
   photoUrl: string | null;
+  photoPath: string | null;
   active: boolean;
   joinedAt: string | null;
   leftAt: string | null;
@@ -19,6 +20,7 @@ export interface PlayerPayload {
   shirtNumber: number | null;
   position: string;
   photoUrl: string | null;
+  photoPath: string | null;
   active: boolean;
   joinedAt: string | null;
   leftAt: string | null;

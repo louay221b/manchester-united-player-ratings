@@ -20,6 +20,7 @@ interface MatchRow {
   season_id: string;
   opponent_name: string;
   opponent_logo_url: string | null;
+  opponent_logo_path: string | null;
   competition: string;
   match_date: string;
   venue: string | null;
@@ -75,6 +76,7 @@ export interface MatchDto {
   seasonId: string;
   opponentName: string;
   opponentLogoUrl: string | null;
+  opponentLogoPath: string | null;
   competition: string;
   matchDate: string;
   venue: string | null;
@@ -122,7 +124,7 @@ export interface LineupPlayerDto {
 }
 
 const matchFields =
-  'id, season_id, opponent_name, opponent_logo_url, competition, match_date, venue, is_home, manchester_united_score, opponent_score, status, voting_status, results_published, created_at, updated_at';
+  'id, season_id, opponent_name, opponent_logo_url, opponent_logo_path, competition, match_date, venue, is_home, manchester_united_score, opponent_score, status, voting_status, results_published, created_at, updated_at';
 const seasonFields = 'id, name, start_date, end_date, status, created_at, updated_at';
 const matchPlayerFields =
   'id, match_id, player_id, participation_status, entered_minute, exited_minute, minutes_played, eligible_for_rating, created_at, updated_at';
@@ -134,6 +136,7 @@ const mapMatchRow = (match: MatchRow): MatchDto => ({
   seasonId: match.season_id,
   opponentName: match.opponent_name,
   opponentLogoUrl: match.opponent_logo_url,
+  opponentLogoPath: match.opponent_logo_path,
   competition: match.competition,
   matchDate: match.match_date,
   venue: match.venue,
@@ -184,6 +187,7 @@ const mapCreateMatchInput = (input: CreateMatchInput) => ({
   season_id: input.seasonId,
   opponent_name: input.opponentName,
   opponent_logo_url: input.opponentLogoUrl,
+  opponent_logo_path: input.opponentLogoPath,
   competition: input.competition,
   match_date: input.matchDate,
   venue: input.venue,
@@ -199,6 +203,7 @@ const mapUpdateMatchInput = (input: UpdateMatchInput) => ({
   ...(input.seasonId === undefined ? {} : { season_id: input.seasonId }),
   ...(input.opponentName === undefined ? {} : { opponent_name: input.opponentName }),
   ...(input.opponentLogoUrl === undefined ? {} : { opponent_logo_url: input.opponentLogoUrl }),
+  ...(input.opponentLogoPath === undefined ? {} : { opponent_logo_path: input.opponentLogoPath }),
   ...(input.competition === undefined ? {} : { competition: input.competition }),
   ...(input.matchDate === undefined ? {} : { match_date: input.matchDate }),
   ...(input.venue === undefined ? {} : { venue: input.venue }),
@@ -333,6 +338,29 @@ const countVotesForMatch = async (client: SupabaseClient, matchId: string) => {
   return (ratingVotes ?? 0) + (motmVotes ?? 0);
 };
 
+const ensureScopedOpponentLogoPath = (
+  matchId: string,
+  opponentLogoPath: string | null | undefined,
+) => {
+  if (opponentLogoPath && !opponentLogoPath.startsWith(`${matchId}/`)) {
+    throw new HttpError(
+      400,
+      'VALIDATION_ERROR',
+      'opponentLogoPath must belong to the target match',
+    );
+  }
+};
+
+const removeOpponentLogo = async (client: SupabaseClient, opponentLogoPath: string | null) => {
+  if (!opponentLogoPath) {
+    return null;
+  }
+
+  const { error } = await client.storage.from('opponent-logos').remove([opponentLogoPath]);
+
+  return error ? 'OPPONENT_LOGO_CLEANUP_FAILED' : null;
+};
+
 export const listMatches = async (filters: MatchQueryInput) => {
   let query = supabasePublicClient.from('matches').select(matchFields, {
     count: 'exact',
@@ -436,6 +464,8 @@ export const updateMatch = async (
     throw new HttpError(409, 'CONFLICT', 'Only scheduled matches can be edited');
   }
 
+  ensureScopedOpponentLogoPath(matchId, input.opponentLogoPath);
+
   const { data, error } = await client
     .from('matches')
     .update(mapUpdateMatchInput(input))
@@ -476,6 +506,12 @@ export const deleteMatch = async (client: SupabaseClient, matchId: string) => {
   if (error) {
     throw mapSupabaseError(error, 'Unable to delete match');
   }
+
+  const cleanupWarning = await removeOpponentLogo(client, match.opponent_logo_path);
+
+  return {
+    warnings: cleanupWarning ? [cleanupWarning] : [],
+  };
 };
 
 export const replaceMatchLineup = async (

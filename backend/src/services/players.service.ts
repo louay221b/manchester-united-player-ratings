@@ -17,6 +17,7 @@ interface PlayerRow {
   shirt_number: number | null;
   position: string;
   photo_url: string | null;
+  photo_path: string | null;
   active: boolean;
   joined_at: string | null;
   left_at: string | null;
@@ -32,6 +33,7 @@ interface PlayerDto {
   shirtNumber: number | null;
   position: string;
   photoUrl: string | null;
+  photoPath: string | null;
   active: boolean;
   joinedAt: string | null;
   leftAt: string | null;
@@ -40,7 +42,7 @@ interface PlayerDto {
 }
 
 const playerFields =
-  'id, first_name, last_name, shirt_number, position, photo_url, active, joined_at, left_at, created_at, updated_at';
+  'id, first_name, last_name, shirt_number, position, photo_url, photo_path, active, joined_at, left_at, created_at, updated_at';
 
 const mapPlayerRow = (player: PlayerRow): PlayerDto => ({
   id: player.id,
@@ -50,6 +52,7 @@ const mapPlayerRow = (player: PlayerRow): PlayerDto => ({
   shirtNumber: player.shirt_number,
   position: player.position,
   photoUrl: player.photo_url,
+  photoPath: player.photo_path,
   active: player.active,
   joinedAt: player.joined_at,
   leftAt: player.left_at,
@@ -63,6 +66,7 @@ const mapCreatePlayerInput = (input: CreatePlayerInput) => ({
   shirt_number: input.shirtNumber,
   position: input.position,
   photo_url: input.photoUrl,
+  photo_path: input.photoPath,
   active: input.active,
   joined_at: input.joinedAt,
   left_at: input.leftAt,
@@ -74,6 +78,7 @@ const mapUpdatePlayerInput = (input: UpdatePlayerInput) => ({
   ...(input.shirtNumber === undefined ? {} : { shirt_number: input.shirtNumber }),
   ...(input.position === undefined ? {} : { position: input.position }),
   ...(input.photoUrl === undefined ? {} : { photo_url: input.photoUrl }),
+  ...(input.photoPath === undefined ? {} : { photo_path: input.photoPath }),
   ...(input.active === undefined ? {} : { active: input.active }),
   ...(input.joinedAt === undefined ? {} : { joined_at: input.joinedAt }),
   ...(input.leftAt === undefined ? {} : { left_at: input.leftAt }),
@@ -91,6 +96,22 @@ const ensurePlayerDateOrder = (joinedAt: string | null, leftAt: string | null) =
 };
 
 const sanitizeSearch = (value: string) => value.replace(/[,%()]/g, ' ').trim();
+
+const ensureScopedPlayerPhotoPath = (playerId: string, photoPath: string | null | undefined) => {
+  if (photoPath && !photoPath.startsWith(`${playerId}/`)) {
+    throw new HttpError(400, 'VALIDATION_ERROR', 'photoPath must belong to the target player');
+  }
+};
+
+const removePlayerPhoto = async (client: SupabaseClient, photoPath: string | null) => {
+  if (!photoPath) {
+    return null;
+  }
+
+  const { error } = await client.storage.from('player-photos').remove([photoPath]);
+
+  return error ? 'PLAYER_PHOTO_CLEANUP_FAILED' : null;
+};
 
 const getPlayerRowById = async (client: SupabaseClient, playerId: string) => {
   const { data, error } = await client
@@ -189,6 +210,7 @@ export const updatePlayer = async (
   const nextLeftAt = input.leftAt === undefined ? existingPlayer.left_at : input.leftAt;
 
   ensurePlayerDateOrder(nextJoinedAt, nextLeftAt);
+  ensureScopedPlayerPhotoPath(playerId, input.photoPath);
 
   const { data, error } = await client
     .from('players')
@@ -232,7 +254,7 @@ export const updatePlayerStatus = async (
 };
 
 export const deletePlayer = async (client: SupabaseClient, playerId: string) => {
-  await getPlayerRowById(client, playerId);
+  const player = await getPlayerRowById(client, playerId);
 
   const { count, error: historyError } = await client
     .from('match_players')
@@ -256,4 +278,10 @@ export const deletePlayer = async (client: SupabaseClient, playerId: string) => 
   if (error) {
     throw mapSupabaseError(error, 'Unable to delete player');
   }
+
+  const cleanupWarning = await removePlayerPhoto(client, player.photo_path);
+
+  return {
+    warnings: cleanupWarning ? [cleanupWarning] : [],
+  };
 };

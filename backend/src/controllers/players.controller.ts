@@ -102,10 +102,11 @@ export const removePlayer: RequestHandler = async (request, response, next) => {
   try {
     const playerId = parseUuidParam(request.params.playerId, 'player');
 
-    await deletePlayer(getAuthenticatedClient(request), playerId);
+    const result = await deletePlayer(getAuthenticatedClient(request), playerId);
 
     response.json({
       success: true,
+      ...(result.warnings.length > 0 ? { warnings: result.warnings } : {}),
     });
   } catch (error) {
     next(error);

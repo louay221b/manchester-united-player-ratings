@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface ApiPlayerAvatarProps {
   player: {
     firstName: string;
@@ -18,13 +20,16 @@ const getInitials = (player: ApiPlayerAvatarProps['player']) =>
   `${player.firstName.charAt(0)}${player.lastName.charAt(0)}`.toUpperCase();
 
 export function ApiPlayerAvatar({ player, size = 'md' }: ApiPlayerAvatarProps) {
-  if (player.photoUrl) {
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+
+  if (player.photoUrl && failedPhotoUrl !== player.photoUrl) {
     return (
       <img
         src={player.photoUrl}
-        alt=""
+        alt={`Photo de ${player.displayName}`}
         className={`${sizes[size]} shrink-0 rounded-lg object-cover`}
         loading="lazy"
+        onError={() => setFailedPhotoUrl(player.photoUrl)}
       />
     );
   }

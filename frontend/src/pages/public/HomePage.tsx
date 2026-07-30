@@ -2,6 +2,7 @@ import { ArrowRight, BarChart3, CalendarDays, Star } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { StatCard } from '../../components/StatCard';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
@@ -42,9 +43,16 @@ function RecentMatchCard({ match }: { match: Match }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="eyebrow">{match.competition}</p>
-            <h2 className="mt-2 text-xl font-black text-zinc-950">
-              Manchester United vs {match.opponentName}
-            </h2>
+            <div className="mt-2 flex items-center gap-3">
+              <OpponentLogo
+                opponentName={match.opponentName}
+                logoUrl={match.opponentLogoUrl}
+                size="md"
+              />
+              <h2 className="text-xl font-black text-zinc-950">
+                Manchester United vs {match.opponentName}
+              </h2>
+            </div>
             <p className="mt-2 text-sm text-zinc-500">
               {formatDate(match.matchDate)} - {match.venue ?? 'Lieu a confirmer'}
             </p>

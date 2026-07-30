@@ -2,6 +2,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { ManOfTheMatchSelector } from '../../components/voting/ManOfTheMatchSelector';
 import { PlayerRatingCard } from '../../components/voting/PlayerRatingCard';
@@ -155,6 +156,13 @@ export function PlayerVotePage() {
           ballot.match.manchesterUnitedScore,
           ballot.match.opponentScore,
         )}`}
+        action={
+          <OpponentLogo
+            opponentName={ballot.match.opponentName}
+            logoUrl={ballot.match.opponentLogoUrl}
+            size="lg"
+          />
+        }
       />
 
       {isVotingClosed ? (

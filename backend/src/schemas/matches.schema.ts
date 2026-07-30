@@ -10,6 +10,25 @@ const optionalNullableUrlSchema = z.preprocess(
   z.string().trim().url().max(500).nullable().optional(),
 );
 
+const optionalCreateStoragePathSchema = z.preprocess(emptyStringToNull, z.null().optional());
+
+const optionalNullableStoragePathSchema = z.preprocess(
+  emptyStringToNull,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(300)
+    .refine((value) => !value.includes('..'), {
+      message: 'opponentLogoPath must not contain parent directory segments',
+    })
+    .refine((value) => !value.startsWith('/') && !value.includes('\\'), {
+      message: 'opponentLogoPath must be a relative storage path',
+    })
+    .nullable()
+    .optional(),
+);
+
 const matchDateSchema = z.string().trim().refine(isValidDateTime, {
   message: 'matchDate must be a valid date-time',
 });
@@ -41,6 +60,7 @@ export const createMatchSchema = z
     seasonId: z.string().uuid(),
     opponentName: z.string().trim().min(1).max(120),
     opponentLogoUrl: optionalNullableUrlSchema.default(null),
+    opponentLogoPath: optionalCreateStoragePathSchema.default(null),
     competition: z.string().trim().min(1).max(120),
     matchDate: matchDateSchema,
     venue: z.string().trim().min(1).max(160).nullable(),
@@ -53,6 +73,7 @@ export const updateMatchSchema = z
     seasonId: z.string().uuid().optional(),
     opponentName: z.string().trim().min(1).max(120).optional(),
     opponentLogoUrl: optionalNullableUrlSchema,
+    opponentLogoPath: optionalNullableStoragePathSchema,
     competition: z.string().trim().min(1).max(120).optional(),
     matchDate: matchDateSchema.optional(),
     venue: z.preprocess(emptyStringToNull, z.string().trim().min(1).max(160).nullable()).optional(),

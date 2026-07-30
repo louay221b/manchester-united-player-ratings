@@ -2,6 +2,7 @@ import { BarChart3, Star } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatch } from '../../hooks/use-matches';
@@ -84,6 +85,11 @@ export function MatchDetailsPage() {
         description={`${formatDate(match.matchDate)} - ${match.venue ?? 'Lieu a confirmer'}`}
         action={
           <>
+            <OpponentLogo
+              opponentName={match.opponentName}
+              logoUrl={match.opponentLogoUrl}
+              size="lg"
+            />
             {match.votingStatus === 'open' ? (
               <Link
                 to={`/matches/${match.id}/vote`}

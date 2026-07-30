@@ -9,6 +9,7 @@ export interface Match {
   seasonId: string;
   opponentName: string;
   opponentLogoUrl: string | null;
+  opponentLogoPath: string | null;
   competition: string;
   matchDate: string;
   venue: string | null;
@@ -61,6 +62,7 @@ export interface MatchPayload {
   seasonId: string;
   opponentName: string;
   opponentLogoUrl: string | null;
+  opponentLogoPath: string | null;
   competition: string;
   matchDate: string;
   venue: string | null;
@@ -137,6 +139,7 @@ export interface VotingBallot {
   match: {
     id: string;
     opponentName: string;
+    opponentLogoUrl: string | null;
     competition: string;
     matchDate: string;
     manchesterUnitedScore: number | null;
@@ -181,6 +184,7 @@ export interface MatchResults {
   match: {
     id: string;
     opponentName: string;
+    opponentLogoUrl: string | null;
     competition: string;
     matchDate: string;
     manchesterUnitedScore: number | null;

@@ -4,16 +4,22 @@ import { useState } from 'react';
 
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { FinishMatchForm } from '../../components/admin/FinishMatchForm';
-import { MatchForm } from '../../components/admin/MatchForm';
+import { MatchForm, type MatchLogoChange } from '../../components/admin/MatchForm';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatchMutations, useMatches } from '../../hooks/use-matches';
 import { useSeasons } from '../../hooks/use-seasons';
 import { ApiError } from '../../lib/api';
+import {
+  removeOpponentLogo as removeStoredOpponentLogo,
+  StorageValidationError,
+  uploadOpponentLogo,
+} from '../../services/storage.service';
 import type { Match, MatchPayload, MatchStatus } from '../../types/match';
 
 interface Notification {
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   message: string;
 }
 
@@ -26,7 +32,24 @@ const matchStatusLabels: Record<MatchStatus, string> = {
 };
 
 const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
+  error instanceof ApiError || error instanceof StorageValidationError
+    ? error.message
+    : error instanceof Error
+      ? error.message
+      : fallback;
+
+const cleanupUploadedLogo = async (path: string | null) => {
+  if (!path) {
+    return false;
+  }
+
+  try {
+    await removeStoredOpponentLogo(path);
+    return false;
+  } catch {
+    return true;
+  }
+};
 
 const formatDate = (date: string) =>
   new Intl.DateTimeFormat('fr-FR', {
@@ -73,8 +96,9 @@ export function AdminMatchesPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [isAssetProcessing, setIsAssetProcessing] = useState(false);
 
-  const isSubmitting = createMatch.isPending || updateMatch.isPending;
+  const isSubmitting = createMatch.isPending || updateMatch.isPending || isAssetProcessing;
 
   const openCreateForm = () => {
     setEditingMatch(undefined);
@@ -94,35 +118,129 @@ export function AdminMatchesPage() {
     setFormError(null);
   };
 
-  const handleSubmit = (payload: MatchPayload) => {
-    setFormError(null);
-    setNotification(null);
+  const createMatchWithOptionalLogo = async (
+    payload: MatchPayload,
+    logoChange: MatchLogoChange,
+  ) => {
+    const createdMatch = await createMatch.mutateAsync({
+      ...payload,
+      opponentLogoUrl: null,
+      opponentLogoPath: null,
+    });
 
-    if (editingMatch) {
-      updateMatch.mutate(
-        { matchId: editingMatch.id, payload },
-        {
-          onSuccess: () => {
-            closeForm();
-            setNotification({ type: 'success', message: 'Match modifie.' });
-          },
-          onError: (error) => {
-            setFormError(getErrorMessage(error, 'Impossible de modifier le match.'));
-          },
-        },
-      );
+    if (!logoChange.file) {
+      closeForm();
+      setNotification({ type: 'success', message: 'Match cree.' });
       return;
     }
 
-    createMatch.mutate(payload, {
-      onSuccess: () => {
+    let uploadedLogo: { path: string; publicUrl: string } | null = null;
+
+    try {
+      uploadedLogo = await uploadOpponentLogo(createdMatch.id, logoChange.file);
+      await updateMatch.mutateAsync({
+        matchId: createdMatch.id,
+        payload: {
+          opponentLogoUrl: uploadedLogo.publicUrl,
+          opponentLogoPath: uploadedLogo.path,
+        },
+      });
+      closeForm();
+      setNotification({ type: 'success', message: 'Match cree avec logo.' });
+    } catch (error) {
+      await cleanupUploadedLogo(uploadedLogo?.path ?? null);
+      setEditingMatch(createdMatch);
+      setFormError(
+        getErrorMessage(
+          error,
+          'Match cree, mais le logo n a pas ete envoye. Ouvre le match pour reessayer.',
+        ),
+      );
+    }
+  };
+
+  const updateMatchWithOptionalLogo = async (
+    match: Match,
+    payload: MatchPayload,
+    logoChange: MatchLogoChange,
+  ) => {
+    if (logoChange.file) {
+      let uploadedLogo: { path: string; publicUrl: string } | null = null;
+
+      try {
+        uploadedLogo = await uploadOpponentLogo(match.id, logoChange.file);
+        await updateMatch.mutateAsync({
+          matchId: match.id,
+          payload: {
+            ...payload,
+            opponentLogoUrl: uploadedLogo.publicUrl,
+            opponentLogoPath: uploadedLogo.path,
+          },
+        });
+
+        const cleanupWarning = await cleanupUploadedLogo(match.opponentLogoPath);
         closeForm();
-        setNotification({ type: 'success', message: 'Match cree.' });
-      },
-      onError: (error) => {
-        setFormError(getErrorMessage(error, 'Impossible de creer le match.'));
-      },
-    });
+        setNotification({
+          type: cleanupWarning ? 'warning' : 'success',
+          message: cleanupWarning
+            ? 'Match modifie. Ancien logo non supprime automatiquement.'
+            : 'Match modifie.',
+        });
+      } catch (error) {
+        await cleanupUploadedLogo(uploadedLogo?.path ?? null);
+        throw error;
+      }
+
+      return;
+    }
+
+    if (logoChange.remove) {
+      await updateMatch.mutateAsync({
+        matchId: match.id,
+        payload: {
+          ...payload,
+          opponentLogoUrl: null,
+          opponentLogoPath: null,
+        },
+      });
+
+      const cleanupWarning = await cleanupUploadedLogo(match.opponentLogoPath);
+      closeForm();
+      setNotification({
+        type: cleanupWarning ? 'warning' : 'success',
+        message: cleanupWarning
+          ? 'Match modifie. Logo Storage non supprime automatiquement.'
+          : 'Match modifie.',
+      });
+      return;
+    }
+
+    await updateMatch.mutateAsync({ matchId: match.id, payload });
+    closeForm();
+    setNotification({ type: 'success', message: 'Match modifie.' });
+  };
+
+  const handleSubmit = (payload: MatchPayload, logoChange: MatchLogoChange) => {
+    setFormError(null);
+    setNotification(null);
+    setIsAssetProcessing(true);
+
+    const operation = editingMatch
+      ? updateMatchWithOptionalLogo(editingMatch, payload, logoChange)
+      : createMatchWithOptionalLogo(payload, logoChange);
+
+    void operation
+      .catch((error: unknown) => {
+        setFormError(
+          getErrorMessage(
+            error,
+            editingMatch ? 'Impossible de modifier le match.' : 'Impossible de creer le match.',
+          ),
+        );
+      })
+      .finally(() => {
+        setIsAssetProcessing(false);
+      });
   };
 
   const handleFinish = (payload: { manchesterUnitedScore: number; opponentScore: number }) => {
@@ -155,8 +273,14 @@ export function AdminMatchesPage() {
     }
 
     deleteMatch.mutate(matchToDelete.id, {
-      onSuccess: () => {
-        setNotification({ type: 'success', message: 'Match supprime.' });
+      onSuccess: (result) => {
+        const hasWarnings = Boolean(result.warnings?.length);
+        setNotification({
+          type: hasWarnings ? 'warning' : 'success',
+          message: hasWarnings
+            ? 'Match supprime. Logo Storage non supprime automatiquement.'
+            : 'Match supprime.',
+        });
         setMatchToDelete(undefined);
       },
       onError: (error) => {
@@ -219,7 +343,9 @@ export function AdminMatchesPage() {
           className={`rounded-md border px-4 py-3 text-sm font-semibold ${
             notification.type === 'success'
               ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-red-200 bg-red-50 text-red-700'
+              : notification.type === 'warning'
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-red-200 bg-red-50 text-red-700'
           }`}
         >
           {notification.message}
@@ -233,6 +359,7 @@ export function AdminMatchesPage() {
           initialMatch={editingMatch}
           submitLabel={editingMatch ? 'Modifier' : 'Creer'}
           isSubmitting={isSubmitting || seasonsQuery.isLoading}
+          isUploading={isAssetProcessing}
           serverError={formError}
           onSubmit={handleSubmit}
           onCancel={closeForm}
@@ -294,7 +421,14 @@ export function AdminMatchesPage() {
                 {matchesQuery.data.data.map((match) => (
                   <tr key={match.id}>
                     <td className="table-cell font-black text-zinc-950">
-                      Manchester United vs {match.opponentName}
+                      <span className="flex items-center gap-3">
+                        <OpponentLogo
+                          opponentName={match.opponentName}
+                          logoUrl={match.opponentLogoUrl}
+                          size="sm"
+                        />
+                        <span>Manchester United vs {match.opponentName}</span>
+                      </span>
                     </td>
                     <td className="table-cell">{match.competition}</td>
                     <td className="table-cell">{formatDate(match.matchDate)}</td>

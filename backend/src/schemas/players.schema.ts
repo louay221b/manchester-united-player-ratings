@@ -41,6 +41,24 @@ const nullablePhotoUrlSchema = z.preprocess(
   z.string().trim().url().max(500).nullable(),
 );
 
+const nullableCreatePhotoPathSchema = z.preprocess(emptyStringToNull, z.null().optional());
+
+const nullableStoragePathSchema = z.preprocess(
+  emptyStringToNull,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(300)
+    .refine((value) => !value.includes('..'), {
+      message: 'photoPath must not contain parent directory segments',
+    })
+    .refine((value) => !value.startsWith('/') && !value.includes('\\'), {
+      message: 'photoPath must be a relative storage path',
+    })
+    .nullable(),
+);
+
 const nullableShirtNumberSchema = z.preprocess(
   emptyStringToNull,
   z.coerce.number().int().min(1).max(99).nullable(),
@@ -68,6 +86,7 @@ export const createPlayerSchema = z
     shirtNumber: nullableShirtNumberSchema,
     position: textFieldSchema,
     photoUrl: nullablePhotoUrlSchema,
+    photoPath: nullableCreatePhotoPathSchema.default(null),
     active: z.boolean(),
     joinedAt: nullableDateSchema,
     leftAt: nullableDateSchema,
@@ -82,6 +101,7 @@ export const updatePlayerSchema = z
     shirtNumber: nullableShirtNumberSchema.optional(),
     position: textFieldSchema.optional(),
     photoUrl: nullablePhotoUrlSchema.optional(),
+    photoPath: nullableStoragePathSchema.optional(),
     active: z.boolean().optional(),
     joinedAt: nullableDateSchema.optional(),
     leftAt: nullableDateSchema.optional(),

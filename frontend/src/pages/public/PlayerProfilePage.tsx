@@ -1,41 +1,19 @@
 import { Link, useParams } from 'react-router';
 
+import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { PageHeader } from '../../components/PageHeader';
 import { StatCard } from '../../components/StatCard';
 import { useActiveSeasonRanking } from '../../hooks/use-season-ranking';
 import { usePlayer } from '../../hooks/use-players';
 import { ApiError } from '../../lib/api';
-import type { Player } from '../../types/player';
 import type { RankingFilters } from '../../types/ranking';
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof ApiError ? error.message : fallback;
 
-const getPlayerInitials = (player: Player) =>
-  `${player.firstName.charAt(0)}${player.lastName.charAt(0)}`.toUpperCase();
-
 const playerProfileRankingFilters: RankingFilters = {};
 
 const formatAverage = (value: number | null) => (value === null ? '—' : value.toFixed(2));
-
-function PlayerHeroAvatar({ player }: { player: Player }) {
-  if (player.photoUrl) {
-    return (
-      <img
-        src={player.photoUrl}
-        alt=""
-        className="h-24 w-24 rounded-lg object-cover"
-        loading="lazy"
-      />
-    );
-  }
-
-  return (
-    <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-3xl font-black text-white">
-      {getPlayerInitials(player)}
-    </span>
-  );
-}
 
 export function PlayerProfilePage() {
   const { playerId } = useParams();
@@ -102,7 +80,7 @@ export function PlayerProfilePage() {
   return (
     <div className="space-y-6">
       <section className="panel flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-        <PlayerHeroAvatar player={player} />
+        <ApiPlayerAvatar player={player} size="lg" />
         <div>
           <p className="eyebrow">Manchester United</p>
           <h1 className="mt-2 text-3xl font-black text-zinc-950">

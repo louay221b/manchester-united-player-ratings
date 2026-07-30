@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { useMatchResults } from '../../hooks/use-match-results';
 import { ApiError } from '../../lib/api';
@@ -105,6 +106,13 @@ export function MatchResultsPage() {
         eyebrow="Resultats"
         title={`Manchester United vs ${results.match.opponentName}`}
         description={`${results.match.competition} - ${formatDate(results.match.matchDate)} - ${results.match.manchesterUnitedScore}-${results.match.opponentScore}`}
+        action={
+          <OpponentLogo
+            opponentName={results.match.opponentName}
+            logoUrl={results.match.opponentLogoUrl}
+            size="lg"
+          />
+        }
       />
 
       <section className="grid gap-4 md:grid-cols-3">

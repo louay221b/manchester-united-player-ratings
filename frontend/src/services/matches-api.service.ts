@@ -17,6 +17,11 @@ interface DataResponse<T> {
   data: T;
 }
 
+interface DeleteResponse {
+  success: true;
+  warnings?: string[];
+}
+
 interface MatchListResponse {
   success: true;
   data: Match[];
@@ -83,7 +88,7 @@ export const updateMatch = async (matchId: string, payload: Partial<MatchPayload
 };
 
 export const deleteMatch = async (matchId: string) =>
-  apiRequest<{ success: true }>(`/api/matches/${matchId}`, {
+  apiRequest<DeleteResponse>(`/api/matches/${matchId}`, {
     method: 'DELETE',
   });
 

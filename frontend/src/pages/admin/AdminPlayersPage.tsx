@@ -10,15 +10,21 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
-import { PlayerForm } from '../../components/admin/PlayerForm';
+import { PlayerForm, type PlayerImageChange } from '../../components/admin/PlayerForm';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlayerMutations, usePlayers } from '../../hooks/use-players';
 import { ApiError } from '../../lib/api';
+import {
+  removePlayerPhoto as removeStoredPlayerPhoto,
+  StorageValidationError,
+  uploadPlayerPhoto,
+} from '../../services/storage.service';
 import type { Player, PlayerPayload } from '../../types/player';
 
 interface Notification {
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   message: string;
 }
 
@@ -27,29 +33,24 @@ type ActiveFilter = 'all' | 'active' | 'inactive';
 const pageSize = 10;
 
 const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
+  error instanceof ApiError || error instanceof StorageValidationError
+    ? error.message
+    : error instanceof Error
+      ? error.message
+      : fallback;
 
-const getPlayerInitials = (player: Player) =>
-  `${player.firstName.charAt(0)}${player.lastName.charAt(0)}`.toUpperCase();
-
-function ApiPlayerAvatar({ player }: { player: Player }) {
-  if (player.photoUrl) {
-    return (
-      <img
-        src={player.photoUrl}
-        alt=""
-        className="h-11 w-11 rounded-lg object-cover"
-        loading="lazy"
-      />
-    );
+const cleanupUploadedPhoto = async (path: string | null) => {
+  if (!path) {
+    return false;
   }
 
-  return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-sm font-black text-white">
-      {getPlayerInitials(player)}
-    </span>
-  );
-}
+  try {
+    await removeStoredPlayerPhoto(path);
+    return false;
+  } catch {
+    return true;
+  }
+};
 
 export function AdminPlayersPage() {
   const [search, setSearch] = useState('');
@@ -62,6 +63,7 @@ export function AdminPlayersPage() {
   const [deleteConflictPlayer, setDeleteConflictPlayer] = useState<Player | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [isAssetProcessing, setIsAssetProcessing] = useState(false);
   const { createPlayer, updatePlayer, updatePlayerStatus, deletePlayer } = usePlayerMutations();
 
   const filters = useMemo(
@@ -76,7 +78,7 @@ export function AdminPlayersPage() {
   );
 
   const playersQuery = usePlayers(filters);
-  const isSubmitting = createPlayer.isPending || updatePlayer.isPending;
+  const isSubmitting = createPlayer.isPending || updatePlayer.isPending || isAssetProcessing;
   const totalPages = Math.max(1, playersQuery.data?.pagination.totalPages ?? 1);
 
   const resetPage = () => setPage(1);
@@ -99,36 +101,132 @@ export function AdminPlayersPage() {
     setFormError(null);
   };
 
-  const handleSubmit = (payload: PlayerPayload) => {
-    setFormError(null);
-    setNotification(null);
+  const createPlayerWithOptionalPhoto = async (
+    payload: PlayerPayload,
+    imageChange: PlayerImageChange,
+  ) => {
+    const createdPlayer = await createPlayer.mutateAsync({
+      ...payload,
+      photoUrl: null,
+      photoPath: null,
+    });
 
-    if (editingPlayer) {
-      updatePlayer.mutate(
-        { playerId: editingPlayer.id, payload },
-        {
-          onSuccess: () => {
-            closeForm();
-            setNotification({ type: 'success', message: 'Joueur modifie.' });
-          },
-          onError: (error) => {
-            setFormError(getErrorMessage(error, 'Impossible de modifier le joueur.'));
-          },
-        },
-      );
+    if (!imageChange.file) {
+      closeForm();
+      resetPage();
+      setNotification({ type: 'success', message: 'Joueur ajoute.' });
       return;
     }
 
-    createPlayer.mutate(payload, {
-      onSuccess: () => {
+    let uploadedPhoto: { path: string; publicUrl: string } | null = null;
+
+    try {
+      uploadedPhoto = await uploadPlayerPhoto(createdPlayer.id, imageChange.file);
+      await updatePlayer.mutateAsync({
+        playerId: createdPlayer.id,
+        payload: {
+          photoUrl: uploadedPhoto.publicUrl,
+          photoPath: uploadedPhoto.path,
+        },
+      });
+      closeForm();
+      resetPage();
+      setNotification({ type: 'success', message: 'Joueur ajoute avec photo.' });
+    } catch (error) {
+      await cleanupUploadedPhoto(uploadedPhoto?.path ?? null);
+      setEditingPlayer(createdPlayer);
+      resetPage();
+      setFormError(
+        getErrorMessage(
+          error,
+          'Joueur cree, mais la photo n a pas ete envoyee. Ouvre le joueur pour reessayer.',
+        ),
+      );
+    }
+  };
+
+  const updatePlayerWithOptionalPhoto = async (
+    player: Player,
+    payload: PlayerPayload,
+    imageChange: PlayerImageChange,
+  ) => {
+    if (imageChange.file) {
+      let uploadedPhoto: { path: string; publicUrl: string } | null = null;
+
+      try {
+        uploadedPhoto = await uploadPlayerPhoto(player.id, imageChange.file);
+        await updatePlayer.mutateAsync({
+          playerId: player.id,
+          payload: {
+            ...payload,
+            photoUrl: uploadedPhoto.publicUrl,
+            photoPath: uploadedPhoto.path,
+          },
+        });
+
+        const cleanupWarning = await cleanupUploadedPhoto(player.photoPath);
         closeForm();
-        resetPage();
-        setNotification({ type: 'success', message: 'Joueur ajoute.' });
-      },
-      onError: (error) => {
-        setFormError(getErrorMessage(error, 'Impossible d ajouter le joueur.'));
-      },
-    });
+        setNotification({
+          type: cleanupWarning ? 'warning' : 'success',
+          message: cleanupWarning
+            ? 'Joueur modifie. Ancienne photo non supprimee automatiquement.'
+            : 'Joueur modifie.',
+        });
+      } catch (error) {
+        await cleanupUploadedPhoto(uploadedPhoto?.path ?? null);
+        throw error;
+      }
+
+      return;
+    }
+
+    if (imageChange.remove) {
+      await updatePlayer.mutateAsync({
+        playerId: player.id,
+        payload: {
+          ...payload,
+          photoUrl: null,
+          photoPath: null,
+        },
+      });
+
+      const cleanupWarning = await cleanupUploadedPhoto(player.photoPath);
+      closeForm();
+      setNotification({
+        type: cleanupWarning ? 'warning' : 'success',
+        message: cleanupWarning
+          ? 'Joueur modifie. Photo Storage non supprimee automatiquement.'
+          : 'Joueur modifie.',
+      });
+      return;
+    }
+
+    await updatePlayer.mutateAsync({ playerId: player.id, payload });
+    closeForm();
+    setNotification({ type: 'success', message: 'Joueur modifie.' });
+  };
+
+  const handleSubmit = (payload: PlayerPayload, imageChange: PlayerImageChange) => {
+    setFormError(null);
+    setNotification(null);
+    setIsAssetProcessing(true);
+
+    const operation = editingPlayer
+      ? updatePlayerWithOptionalPhoto(editingPlayer, payload, imageChange)
+      : createPlayerWithOptionalPhoto(payload, imageChange);
+
+    void operation
+      .catch((error: unknown) => {
+        setFormError(
+          getErrorMessage(
+            error,
+            editingPlayer ? 'Impossible de modifier le joueur.' : 'Impossible d ajouter le joueur.',
+          ),
+        );
+      })
+      .finally(() => {
+        setIsAssetProcessing(false);
+      });
   };
 
   const handleStatusChange = (player: Player, active: boolean) => {
@@ -162,8 +260,14 @@ export function AdminPlayersPage() {
     setNotification(null);
 
     deletePlayer.mutate(targetPlayer.id, {
-      onSuccess: () => {
-        setNotification({ type: 'success', message: 'Joueur supprime.' });
+      onSuccess: (result) => {
+        const hasWarnings = Boolean(result.warnings?.length);
+        setNotification({
+          type: hasWarnings ? 'warning' : 'success',
+          message: hasWarnings
+            ? 'Joueur supprime. Photo Storage non supprimee automatiquement.'
+            : 'Joueur supprime.',
+        });
         setPlayerToDelete(undefined);
       },
       onError: (error) => {
@@ -204,7 +308,9 @@ export function AdminPlayersPage() {
           className={`rounded-md border px-4 py-3 text-sm font-semibold ${
             notification.type === 'success'
               ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-red-200 bg-red-50 text-red-700'
+              : notification.type === 'warning'
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-red-200 bg-red-50 text-red-700'
           }`}
         >
           {notification.message}
@@ -235,6 +341,7 @@ export function AdminPlayersPage() {
           initialPlayer={editingPlayer}
           submitLabel={editingPlayer ? 'Modifier' : 'Ajouter'}
           isSubmitting={isSubmitting}
+          isUploading={isAssetProcessing}
           serverError={formError}
           onSubmit={handleSubmit}
           onCancel={closeForm}
@@ -333,7 +440,7 @@ export function AdminPlayersPage() {
                     <tr key={player.id}>
                       <td className="table-cell">
                         <span className="flex items-center gap-3 font-black text-zinc-950">
-                          <ApiPlayerAvatar player={player} />
+                          <ApiPlayerAvatar player={player} size="sm" />
                           {player.displayName}
                         </span>
                       </td>

@@ -1,23 +1,29 @@
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 
+import { ImageUploadField } from '../forms/ImageUploadField';
 import type { Match, MatchPayload } from '../../types/match';
 import type { Season } from '../../types/season';
+
+export interface MatchLogoChange {
+  file: File | null;
+  remove: boolean;
+}
 
 interface MatchFormProps {
   seasons: Season[];
   initialMatch?: Match;
   submitLabel: string;
   isSubmitting: boolean;
+  isUploading?: boolean;
   serverError?: string | null;
-  onSubmit: (payload: MatchPayload) => void;
+  onSubmit: (payload: MatchPayload, logoChange: MatchLogoChange) => void;
   onCancel: () => void;
 }
 
 interface MatchFormState {
   seasonId: string;
   opponentName: string;
-  opponentLogoUrl: string;
   competition: string;
   matchDate: string;
   venue: string;
@@ -40,15 +46,6 @@ const toDatetimeLocal = (value?: string) => {
 
 const toIsoDate = (value: string) => new Date(value).toISOString();
 
-const isValidUrl = (value: string) => {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const validateMatchForm = (form: MatchFormState) => {
   const errors: Partial<Record<keyof MatchFormState, string>> = {};
 
@@ -68,10 +65,6 @@ const validateMatchForm = (form: MatchFormState) => {
     errors.matchDate = 'La date du match est obligatoire.';
   }
 
-  if (form.opponentLogoUrl.trim() && !isValidUrl(form.opponentLogoUrl.trim())) {
-    errors.opponentLogoUrl = 'L URL du logo doit etre valide.';
-  }
-
   return errors;
 };
 
@@ -80,6 +73,7 @@ export function MatchForm({
   initialMatch,
   submitLabel,
   isSubmitting,
+  isUploading = false,
   serverError,
   onSubmit,
   onCancel,
@@ -88,13 +82,16 @@ export function MatchForm({
   const [form, setForm] = useState<MatchFormState>({
     seasonId: initialMatch?.seasonId ?? activeSeason?.id ?? '',
     opponentName: initialMatch?.opponentName ?? '',
-    opponentLogoUrl: initialMatch?.opponentLogoUrl ?? '',
     competition: initialMatch?.competition ?? 'Premier League',
     matchDate: toDatetimeLocal(initialMatch?.matchDate),
     venue: initialMatch?.venue ?? '',
     isHome: initialMatch?.isHome ?? true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof MatchFormState, string>>>({});
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+
+  const isBusy = isSubmitting || isUploading;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -106,15 +103,22 @@ export function MatchForm({
       return;
     }
 
-    onSubmit({
-      seasonId: form.seasonId,
-      opponentName: form.opponentName.trim(),
-      opponentLogoUrl: form.opponentLogoUrl.trim() || null,
-      competition: form.competition.trim(),
-      matchDate: toIsoDate(form.matchDate),
-      venue: form.venue.trim() || null,
-      isHome: form.isHome,
-    });
+    onSubmit(
+      {
+        seasonId: form.seasonId,
+        opponentName: form.opponentName.trim(),
+        opponentLogoUrl: initialMatch?.opponentLogoUrl ?? null,
+        opponentLogoPath: initialMatch?.opponentLogoPath ?? null,
+        competition: form.competition.trim(),
+        matchDate: toIsoDate(form.matchDate),
+        venue: form.venue.trim() || null,
+        isHome: form.isHome,
+      },
+      {
+        file: selectedLogoFile,
+        remove: removeLogo,
+      },
+    );
   };
 
   return (
@@ -132,6 +136,20 @@ export function MatchForm({
         </div>
       ) : null}
 
+      <ImageUploadField
+        label="Logo adversaire"
+        currentImageUrl={initialMatch?.opponentLogoUrl ?? null}
+        placeholderLabel="Logo adversaire indisponible"
+        imageAlt={`Logo de ${form.opponentName || 'adversaire'}`}
+        selectedFile={selectedLogoFile}
+        removeRequested={removeLogo}
+        isUploading={isUploading}
+        disabled={isBusy}
+        variant="logo"
+        onFileChange={setSelectedLogoFile}
+        onRemoveChange={setRemoveLogo}
+      />
+
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 text-sm font-bold text-zinc-700">
           Saison
@@ -141,7 +159,7 @@ export function MatchForm({
               setForm((current) => ({ ...current, seasonId: event.target.value }))
             }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            disabled={isSubmitting}
+            disabled={isBusy}
           >
             <option value="">Selectionner</option>
             {seasons.map((season) => (
@@ -161,7 +179,7 @@ export function MatchForm({
               setForm((current) => ({ ...current, competition: event.target.value }))
             }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
           {errors.competition ? (
             <span className="text-xs text-red-700">{errors.competition}</span>
@@ -176,7 +194,7 @@ export function MatchForm({
               setForm((current) => ({ ...current, opponentName: event.target.value }))
             }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
           {errors.opponentName ? (
             <span className="text-xs text-red-700">{errors.opponentName}</span>
@@ -192,7 +210,7 @@ export function MatchForm({
               setForm((current) => ({ ...current, matchDate: event.target.value }))
             }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
           {errors.matchDate ? (
             <span className="text-xs text-red-700">{errors.matchDate}</span>
@@ -206,24 +224,8 @@ export function MatchForm({
             onChange={(event) => setForm((current) => ({ ...current, venue: event.target.value }))}
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             placeholder="Old Trafford"
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
-        </label>
-
-        <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Logo adversaire
-          <input
-            value={form.opponentLogoUrl}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, opponentLogoUrl: event.target.value }))
-            }
-            className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            placeholder="https://example.com/logo.png"
-            disabled={isSubmitting}
-          />
-          {errors.opponentLogoUrl ? (
-            <span className="text-xs text-red-700">{errors.opponentLogoUrl}</span>
-          ) : null}
         </label>
 
         <label className="flex items-center gap-3 text-sm font-bold text-zinc-700">
@@ -234,7 +236,7 @@ export function MatchForm({
               setForm((current) => ({ ...current, isHome: event.target.checked }))
             }
             className="h-4 w-4 accent-united-red"
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
           Match a domicile
         </label>
@@ -245,16 +247,16 @@ export function MatchForm({
           type="button"
           onClick={onCancel}
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-          disabled={isSubmitting}
+          disabled={isBusy}
         >
           Annuler
         </button>
         <button
           type="submit"
           className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
-          disabled={isSubmitting}
+          disabled={isBusy}
         >
-          {isSubmitting ? 'Enregistrement...' : submitLabel}
+          {isBusy ? 'Enregistrement...' : submitLabel}
         </button>
       </div>
     </form>

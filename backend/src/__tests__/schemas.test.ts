@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMatchSchema, finishMatchSchema } from '../schemas/matches.schema.js';
-import { createPlayerSchema } from '../schemas/players.schema.js';
+import {
+  createMatchSchema,
+  finishMatchSchema,
+  updateMatchSchema,
+} from '../schemas/matches.schema.js';
+import { createPlayerSchema, updatePlayerSchema } from '../schemas/players.schema.js';
 import { createSeasonSchema } from '../schemas/seasons.schema.js';
 import { submitBallotSchema } from '../schemas/voting.schema.js';
 
@@ -64,6 +68,47 @@ describe('business validation schemas', () => {
         opponentScore: 1,
       }),
     ).not.toThrow();
+  });
+
+  it('rejects storage paths on create and unsafe paths on update', () => {
+    expect(() =>
+      createPlayerSchema.parse({
+        firstName: 'Bruno',
+        lastName: 'Fernandes',
+        shirtNumber: 8,
+        position: 'Midfielder',
+        photoUrl: null,
+        photoPath: `${playerId}/photo.webp`,
+        active: true,
+        joinedAt: '2026-08-01',
+        leftAt: null,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      updatePlayerSchema.parse({
+        photoPath: '../private/photo.webp',
+      }),
+    ).toThrow();
+
+    expect(() =>
+      createMatchSchema.parse({
+        seasonId,
+        opponentName: 'Liverpool',
+        opponentLogoUrl: null,
+        opponentLogoPath: `${playerId}/logo.png`,
+        competition: 'Premier League',
+        matchDate: '2026-09-14T16:30:00.000Z',
+        venue: 'Old Trafford',
+        isHome: true,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      updateMatchSchema.parse({
+        opponentLogoPath: '/logos/liverpool.png',
+      }),
+    ).toThrow();
   });
 
   it('rejects duplicate ballot players and invalid rating steps', () => {

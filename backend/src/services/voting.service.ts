@@ -8,6 +8,7 @@ import { createNotFoundError, mapSupabaseError } from '../utils/supabase-error.j
 interface MatchRow {
   id: string;
   opponent_name: string;
+  opponent_logo_url: string | null;
   competition: string;
   match_date: string;
   manchester_united_score: number | null;
@@ -48,6 +49,7 @@ export interface BallotDto {
   match: {
     id: string;
     opponentName: string;
+    opponentLogoUrl: string | null;
     competition: string;
     matchDate: string;
     manchesterUnitedScore: number | null;
@@ -78,6 +80,7 @@ export interface MatchResultsDto {
   match: {
     id: string;
     opponentName: string;
+    opponentLogoUrl: string | null;
     competition: string;
     matchDate: string;
     manchesterUnitedScore: number | null;
@@ -116,7 +119,7 @@ export interface MatchResultsDto {
 }
 
 const matchBallotFields =
-  'id, opponent_name, competition, match_date, manchester_united_score, opponent_score, status, voting_status, results_published';
+  'id, opponent_name, opponent_logo_url, competition, match_date, manchester_united_score, opponent_score, status, voting_status, results_published';
 const matchPlayerFields =
   'id, match_id, player_id, participation_status, minutes_played, eligible_for_rating';
 const playerFields = 'id, first_name, last_name, shirt_number, position, photo_url';
@@ -124,6 +127,7 @@ const playerFields = 'id, first_name, last_name, shirt_number, position, photo_u
 const mapBallotMatch = (match: MatchRow): BallotDto['match'] => ({
   id: match.id,
   opponentName: match.opponent_name,
+  opponentLogoUrl: match.opponent_logo_url,
   competition: match.competition,
   matchDate: match.match_date,
   manchesterUnitedScore: match.manchester_united_score,

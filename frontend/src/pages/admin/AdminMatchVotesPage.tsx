@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useAdminMatchResults } from '../../hooks/use-match-results';
@@ -146,12 +147,19 @@ export function AdminMatchVotesPage() {
             : `${results.summary.usersWhoVoted} utilisateurs ont vote, ${results.summary.ratingsCount} notes au total.`
         }
         action={
-          <Link
-            to="/admin/matches"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
-          >
-            Retour aux matchs
-          </Link>
+          <>
+            <OpponentLogo
+              opponentName={results.match.opponentName}
+              logoUrl={results.match.opponentLogoUrl}
+              size="md"
+            />
+            <Link
+              to="/admin/matches"
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
+            >
+              Retour aux matchs
+            </Link>
+          </>
         }
       />
 

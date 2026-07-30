@@ -126,10 +126,11 @@ export const removeMatch: RequestHandler = async (request, response, next) => {
   try {
     const matchId = parseUuidParam(request.params.matchId, 'match');
 
-    await deleteMatch(getAuthenticatedClient(request), matchId);
+    const result = await deleteMatch(getAuthenticatedClient(request), matchId);
 
     response.json({
       success: true,
+      ...(result.warnings.length > 0 ? { warnings: result.warnings } : {}),
     });
   } catch (error) {
     next(error);

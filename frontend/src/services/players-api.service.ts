@@ -6,6 +6,11 @@ interface DataResponse<T> {
   data: T;
 }
 
+interface DeleteResponse {
+  success: true;
+  warnings?: string[];
+}
+
 interface PlayerListResponse {
   success: true;
   data: Player[];
@@ -77,6 +82,6 @@ export const updatePlayerStatus = async (playerId: string, active: boolean) => {
 };
 
 export const deletePlayer = async (playerId: string) =>
-  apiRequest<{ success: true }>(`/api/players/${playerId}`, {
+  apiRequest<DeleteResponse>(`/api/players/${playerId}`, {
     method: 'DELETE',
   });
