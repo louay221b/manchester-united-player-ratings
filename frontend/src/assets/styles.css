@@ -22,6 +22,10 @@
   a {
     @apply transition-colors;
   }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-4 ring-united-red/25;
+  }
 }
 
 @layer components {

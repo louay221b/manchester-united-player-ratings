@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router';
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { useMatchResults } from '../../hooks/use-match-results';
 import { translateApiError } from '../../i18n/errors';
 import { useFormatters } from '../../i18n/format';
@@ -46,17 +47,31 @@ export function MatchResultsPage() {
 
   if (!matchId) {
     return (
-      <PageHeader
-        eyebrow={t('results.title')}
-        title={t('matches.notFound')}
-        description={t('matches.missingId')}
-      />
+      <>
+        <PageMeta
+          title={t('seo.results.title')}
+          description={t('seo.results.description')}
+          robots="noindex, nofollow"
+        />
+        <PageHeader
+          eyebrow={t('results.title')}
+          title={t('matches.notFound')}
+          description={t('matches.missingId')}
+        />
+      </>
     );
   }
 
   if (resultsQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('results.loading')}</div>
+      <>
+        <PageMeta
+          title={t('seo.results.title')}
+          description={t('seo.results.description')}
+          robots="noindex, nofollow"
+        />
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('results.loading')}</div>
+      </>
     );
   }
 
@@ -66,6 +81,11 @@ export function MatchResultsPage() {
 
     return (
       <div className="space-y-4">
+        <PageMeta
+          title={t('seo.results.title')}
+          description={t('seo.results.description')}
+          robots="noindex, nofollow"
+        />
         <PageHeader
           eyebrow={t('results.title')}
           title={unpublished ? t('results.unpublished') : t('results.unavailable')}
@@ -98,6 +118,7 @@ export function MatchResultsPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title={t('seo.results.title')} description={t('seo.results.description')} />
       <PageHeader
         eyebrow={t('results.title')}
         title={`Manchester United vs ${results.match.opponentName}`}

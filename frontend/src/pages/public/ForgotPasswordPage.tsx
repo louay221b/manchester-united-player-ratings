@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { requestPasswordRecovery } from '../../services/account.service';
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,6 +39,10 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
+      <PageMeta
+        title={t('seo.forgotPassword.title')}
+        description={t('seo.forgotPassword.description')}
+      />
       <PageHeader
         eyebrow={t('auth.accountEyebrow')}
         title={t('auth.forgotPassword.title')}

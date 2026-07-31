@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/</loc>
+  </url>
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/matches</loc>
+  </url>
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/ranking</loc>
+  </url>
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/login</loc>
+  </url>
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/register</loc>
+  </url>
+  <url>
+    <loc>https://manchester-united-player-ratings.vercel.app/forgot-password</loc>
+  </url>
+</urlset>

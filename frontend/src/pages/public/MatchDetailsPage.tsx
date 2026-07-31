@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatch } from '../../hooks/use-matches';
 import { translateApiError } from '../../i18n/errors';
@@ -18,25 +19,43 @@ export function MatchDetailsPage() {
 
   if (!matchId) {
     return (
-      <PageHeader
-        eyebrow={t('errors.NOT_FOUND')}
-        title={t('matches.notFound')}
-        description={t('matches.missingId')}
-      />
+      <>
+        <PageMeta
+          title={t('seo.matchDetails.title')}
+          description={t('seo.matchDetails.description')}
+          robots="noindex, nofollow"
+        />
+        <PageHeader
+          eyebrow={t('errors.NOT_FOUND')}
+          title={t('matches.notFound')}
+          description={t('matches.missingId')}
+        />
+      </>
     );
   }
 
   if (matchQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">
-        {t('matches.detailsLoading')}
-      </div>
+      <>
+        <PageMeta
+          title={t('seo.matchDetails.title')}
+          description={t('seo.matchDetails.description')}
+        />
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">
+          {t('matches.detailsLoading')}
+        </div>
+      </>
     );
   }
 
   if (matchQuery.isError) {
     return (
       <div className="space-y-4">
+        <PageMeta
+          title={t('seo.matchDetails.title')}
+          description={t('seo.matchDetails.description')}
+          robots="noindex, nofollow"
+        />
         <PageHeader
           eyebrow={t('errors.NOT_FOUND')}
           title={t('matches.notFound')}
@@ -65,6 +84,10 @@ export function MatchDetailsPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta
+        title={t('seo.matchDetails.title')}
+        description={t('seo.matchDetails.description')}
+      />
       <PageHeader
         eyebrow={match.competition}
         title={`Manchester United vs ${match.opponentName}`}

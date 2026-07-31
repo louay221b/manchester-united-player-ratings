@@ -109,7 +109,14 @@ export function ImageUploadField({
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 md:col-span-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         {hasImage ? (
-          <img src={imageUrl ?? ''} alt={imageAlt} className={mediaClass} />
+          <img
+            src={imageUrl ?? ''}
+            alt={imageAlt}
+            width={96}
+            height={96}
+            className={mediaClass}
+            loading="lazy"
+          />
         ) : (
           <span
             className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-xl font-black text-zinc-500"

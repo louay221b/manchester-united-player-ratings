@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { ManOfTheMatchSelector } from '../../components/voting/ManOfTheMatchSelector';
 import { PlayerRatingCard } from '../../components/voting/PlayerRatingCard';
 import { VotingProgress } from '../../components/voting/VotingProgress';
@@ -43,23 +44,42 @@ export function PlayerVotePage() {
 
   if (!matchId) {
     return (
-      <PageHeader
-        eyebrow={t('voting.supporterVote')}
-        title={t('matches.notFound')}
-        description={t('matches.missingId')}
-      />
+      <>
+        <PageMeta
+          title={t('seo.vote.title')}
+          description={t('seo.vote.description')}
+          robots="noindex, nofollow"
+        />
+        <PageHeader
+          eyebrow={t('voting.supporterVote')}
+          title={t('matches.notFound')}
+          description={t('matches.missingId')}
+        />
+      </>
     );
   }
 
   if (ballotQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('voting.loading')}</div>
+      <>
+        <PageMeta
+          title={t('seo.vote.title')}
+          description={t('seo.vote.description')}
+          robots="noindex, nofollow"
+        />
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('voting.loading')}</div>
+      </>
     );
   }
 
   if (ballotQuery.isError) {
     return (
       <div className="space-y-4">
+        <PageMeta
+          title={t('seo.vote.title')}
+          description={t('seo.vote.description')}
+          robots="noindex, nofollow"
+        />
         <PageHeader
           eyebrow={t('voting.supporterVote')}
           title={t('voting.unavailable')}
@@ -130,6 +150,11 @@ export function PlayerVotePage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta
+        title={t('seo.vote.title')}
+        description={t('seo.vote.description')}
+        robots="noindex, nofollow"
+      />
       <PageHeader
         eyebrow={t('voting.supporterVote')}
         title={`Manchester United vs ${ballot.match.opponentName}`}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { RankingFilters } from '../../components/ranking/RankingFilters';
 import { RankingPodium } from '../../components/ranking/RankingPodium';
 import { RankingTable } from '../../components/ranking/RankingTable';
@@ -26,6 +27,7 @@ export function RankingPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title={t('seo.ranking.title')} description={t('seo.ranking.description')} />
       <PageHeader
         eyebrow={t('ranking.eyebrow')}
         title={t('ranking.title')}

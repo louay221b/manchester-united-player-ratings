@@ -11,6 +11,61 @@
     "name": "Manchester United",
     "fullName": "Manchester United Player Ratings"
   },
+  "seo": {
+    "defaultDescription": "قيّم لاعبي Manchester United بعد كل مباراة، واختر رجل المباراة، وتابع ترتيب الموسم.",
+    "home": {
+      "title": "Manchester United Player Ratings",
+      "description": "قيّم لاعبي Manchester United بعد كل مباراة وتابع ترتيب الموسم الذي تصنعه أصوات المشجعين."
+    },
+    "matches": {
+      "title": "المباريات",
+      "description": "تصفح مباريات Manchester United وافتح صفحات تقييم اللاعبين المتاحة."
+    },
+    "matchDetails": {
+      "title": "تفاصيل المباراة",
+      "description": "اطلع على تفاصيل المباراة والتشكيلة وحالة التصويت والنتائج المنشورة."
+    },
+    "vote": {
+      "title": "التصويت",
+      "description": "قيّم لاعبي Manchester United واختر رجل المباراة."
+    },
+    "results": {
+      "title": "النتائج",
+      "description": "شاهد تقييمات المشجعين ونتائج رجل المباراة."
+    },
+    "ranking": {
+      "title": "الترتيب",
+      "description": "تابع ترتيب الموسم بناءً على متوسطات تقييم اللاعبين في كل مباراة."
+    },
+    "login": {
+      "title": "تسجيل الدخول",
+      "description": "سجّل الدخول للتصويت وإدارة ملفك الشخصي والوصول إلى الصفحات المحمية."
+    },
+    "register": {
+      "title": "إنشاء حساب",
+      "description": "أنشئ حساب مشجع لتقييم لاعبي Manchester United."
+    },
+    "forgotPassword": {
+      "title": "نسيت كلمة المرور",
+      "description": "اطلب رابطًا آمنًا لاستعادة كلمة المرور."
+    },
+    "resetPassword": {
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "عيّن كلمة مرور جديدة لحسابك."
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "description": "أدر ملفك الشخصي كمشجع."
+    },
+    "playerProfile": {
+      "title": "ملف اللاعب",
+      "description": "اطلع على ملف لاعب من Manchester United وإحصاءات موسمه."
+    },
+    "admin": {
+      "title": "الإدارة",
+      "description": "منطقة إدارة خاصة للمواسم واللاعبين والمباريات والتصويت."
+    }
+  },
   "home": {
     "heroDescription": "قيّم كل لاعب من Manchester United بعد كل مباراة وتابع ترتيب الموسم الذي تصنعه أصوات المشجعين.",
     "rateMatch": "قيّم المباراة",
@@ -589,7 +644,9 @@
   },
   "notFound": {
     "title": "الصفحة غير موجودة",
-    "description": "المسار المطلوب غير موجود في هذا الواجهة."
+    "description": "المسار المطلوب غير موجود في هذا الواجهة.",
+    "homeLink": "العودة إلى الرئيسية",
+    "matchesLink": "عرض المباريات"
   },
   "footer": {
     "contact": "التواصل",

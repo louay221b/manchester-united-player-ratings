@@ -16,6 +16,13 @@ const sizeClasses = {
   xl: 'h-24 w-24 text-3xl',
 };
 
+const imageSizes = {
+  sm: 40,
+  md: 48,
+  lg: 80,
+  xl: 96,
+};
+
 const getInitials = (firstName: string, lastName: string) =>
   `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
@@ -37,6 +44,8 @@ export function PlayerAvatar({
       <img
         src={photoUrl}
         alt={t('imageUpload.playerPhotoAlt', { player: displayName })}
+        width={imageSizes[size]}
+        height={imageSizes[size]}
         className={`${baseClass} object-cover`}
         loading="lazy"
         onError={() => setFailedPhotoUrl(photoUrl)}

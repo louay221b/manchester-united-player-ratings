@@ -11,6 +11,61 @@
     "name": "Manchester United",
     "fullName": "Manchester United Player Ratings"
   },
+  "seo": {
+    "defaultDescription": "Rate Manchester United players after every match, vote for the player of the match, and follow season rankings.",
+    "home": {
+      "title": "Manchester United Player Ratings",
+      "description": "Rate Manchester United players after every match and follow season rankings shaped by supporter votes."
+    },
+    "matches": {
+      "title": "Matches",
+      "description": "Browse Manchester United fixtures and open the available player rating pages."
+    },
+    "matchDetails": {
+      "title": "Match details",
+      "description": "See match details, lineups, voting status and published results."
+    },
+    "vote": {
+      "title": "Vote",
+      "description": "Rate Manchester United players and choose your player of the match."
+    },
+    "results": {
+      "title": "Results",
+      "description": "View supporter ratings and player of the match results."
+    },
+    "ranking": {
+      "title": "Rankings",
+      "description": "Follow the season ranking based on match-by-match player rating averages."
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to vote, manage your profile and access protected pages."
+    },
+    "register": {
+      "title": "Sign up",
+      "description": "Create a supporter account to rate Manchester United players."
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Request a secure password recovery link."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Set a new password for your supporter account."
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your supporter profile."
+    },
+    "playerProfile": {
+      "title": "Player profile",
+      "description": "View a Manchester United player profile and season statistics."
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Private administration area for seasons, players, matches and votes."
+    }
+  },
   "home": {
     "heroDescription": "Rate every Manchester United player after each match and follow the season rankings shaped by supporter votes.",
     "rateMatch": "Rate the match",
@@ -589,7 +644,9 @@
   },
   "notFound": {
     "title": "Page not found",
-    "description": "The requested route does not exist in this frontend."
+    "description": "The requested route does not exist in this frontend.",
+    "homeLink": "Back to home",
+    "matchesLink": "View matches"
   },
   "fallback": {
     "englishOnly": "English fallback"

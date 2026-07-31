@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { useAuth } from '../../contexts/useAuth';
 import { useFormatters } from '../../i18n/format';
 import { updateOwnProfile, updatePassword } from '../../services/account.service';
@@ -115,6 +116,11 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta
+        title={t('seo.profile.title')}
+        description={t('seo.profile.description')}
+        robots="noindex, nofollow"
+      />
       <PageHeader
         eyebrow={t('account.eyebrow')}
         title={t('account.title')}

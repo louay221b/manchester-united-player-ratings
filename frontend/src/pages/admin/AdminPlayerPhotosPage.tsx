@@ -77,7 +77,10 @@ function FilePreview({ file }: { file: File }) {
     <img
       src={previewUrl}
       alt={t('admin.photos.previewAlt', { file: file.name })}
+      width={64}
+      height={64}
       className="h-16 w-16 shrink-0 rounded-lg object-cover"
+      loading="lazy"
     />
   );
 }

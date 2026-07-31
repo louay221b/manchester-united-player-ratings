@@ -11,6 +11,61 @@
     "name": "Manchester United",
     "fullName": "Manchester United Player Ratings"
   },
+  "seo": {
+    "defaultDescription": "Note les joueurs de Manchester United après chaque match, vote pour l’homme du match et suis le classement de la saison.",
+    "home": {
+      "title": "Manchester United Player Ratings",
+      "description": "Note les joueurs de Manchester United après chaque match et suis le classement de saison construit par les votes des supporters."
+    },
+    "matches": {
+      "title": "Matchs",
+      "description": "Consulte les matchs de Manchester United et ouvre les pages de notation disponibles."
+    },
+    "matchDetails": {
+      "title": "Détails du match",
+      "description": "Consulte les détails du match, la composition, le statut des votes et les résultats publiés."
+    },
+    "vote": {
+      "title": "Vote",
+      "description": "Note les joueurs de Manchester United et choisis ton homme du match."
+    },
+    "results": {
+      "title": "Résultats",
+      "description": "Consulte les notes des supporters et les résultats de l’homme du match."
+    },
+    "ranking": {
+      "title": "Classement",
+      "description": "Suis le classement de saison basé sur les moyennes de notes obtenues match par match."
+    },
+    "login": {
+      "title": "Connexion",
+      "description": "Connecte-toi pour voter, gérer ton profil et accéder aux pages protégées."
+    },
+    "register": {
+      "title": "Inscription",
+      "description": "Crée un compte supporter pour noter les joueurs de Manchester United."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "description": "Demande un lien sécurisé de récupération de mot de passe."
+    },
+    "resetPassword": {
+      "title": "Réinitialisation du mot de passe",
+      "description": "Définis un nouveau mot de passe pour ton compte supporter."
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Gère ton profil supporter."
+    },
+    "playerProfile": {
+      "title": "Profil joueur",
+      "description": "Consulte le profil d’un joueur de Manchester United et ses statistiques de saison."
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Espace d’administration privé pour les saisons, joueurs, matchs et votes."
+    }
+  },
   "home": {
     "heroDescription": "Note chaque joueur de Manchester United après chaque match et suis le classement de saison construit par les votes des supporters.",
     "rateMatch": "Noter le match",
@@ -589,7 +644,9 @@
   },
   "notFound": {
     "title": "Page introuvable",
-    "description": "La route demandée n’existe pas dans ce frontend."
+    "description": "La route demandée n’existe pas dans ce frontend.",
+    "homeLink": "Retour à l’accueil",
+    "matchesLink": "Voir les matchs"
   },
   "footer": {
     "contact": "Contact",

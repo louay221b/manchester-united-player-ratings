@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { useAuth } from '../../contexts/useAuth';
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -66,6 +67,7 @@ export function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
+      <PageMeta title={t('seo.register.title')} description={t('seo.register.description')} />
       <PageHeader
         eyebrow={t('auth.accountEyebrow')}
         title={t('auth.register.title')}

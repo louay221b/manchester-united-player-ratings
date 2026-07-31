@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { useAuth } from '../../contexts/useAuth';
 
 type RedirectLocation = {
@@ -59,6 +60,7 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
+      <PageMeta title={t('seo.login.title')} description={t('seo.login.description')} />
       <PageHeader
         eyebrow={t('auth.accountEyebrow')}
         title={t('auth.login.title')}

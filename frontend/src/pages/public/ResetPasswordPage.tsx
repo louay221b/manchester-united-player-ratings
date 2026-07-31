@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { supabase } from '../../lib/supabase';
 import { updatePassword } from '../../services/account.service';
 
@@ -116,6 +117,11 @@ export function ResetPasswordPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
+      <PageMeta
+        title={t('seo.resetPassword.title')}
+        description={t('seo.resetPassword.description')}
+        robots="noindex, nofollow"
+      />
       <PageHeader
         eyebrow={t('auth.accountEyebrow')}
         title={t('auth.resetPassword.title')}

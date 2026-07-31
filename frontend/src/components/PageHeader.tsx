@@ -5,16 +5,23 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  titleAs?: 'h1' | 'h2';
 }
 
-export function PageHeader({ eyebrow, title, description, action }: PageHeaderProps) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action,
+  titleAs: TitleTag = 'h1',
+}: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-4 border-b border-zinc-200 pb-6 md:flex-row md:items-end md:justify-between">
       <div className="max-w-3xl">
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-        <h1 className="mt-2 text-3xl font-bold tracking-normal text-zinc-950 md:text-4xl">
+        <TitleTag className="mt-2 text-3xl font-bold tracking-normal text-zinc-950 md:text-4xl">
           {title}
-        </h1>
+        </TitleTag>
         {description ? (
           <p className="mt-3 text-base leading-7 text-zinc-600">{description}</p>
         ) : null}

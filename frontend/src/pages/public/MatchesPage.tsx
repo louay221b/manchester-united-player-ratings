@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatches } from '../../hooks/use-matches';
 import { translateApiError } from '../../i18n/errors';
@@ -84,6 +85,7 @@ export function MatchesPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title={t('seo.matches.title')} description={t('seo.matches.description')} />
       <PageHeader
         eyebrow={t('matches.eyebrow')}
         title={t('matches.title')}

@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '../components/layout/LanguageSwitcher';
+import { PageMeta } from '../components/PageMeta';
 import { NavLinkItem } from '../components/NavLinkItem';
 import { useAuth } from '../contexts/useAuth';
 import { AccessDeniedPage } from '../pages/AccessDeniedPage';
@@ -38,6 +39,11 @@ export function AdminLayout() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <PageMeta
+        title={t('seo.admin.title')}
+        description={t('seo.admin.description')}
+        robots="noindex, nofollow"
+      />
       <aside className="panel h-fit p-3">
         <div className="px-3 py-2">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-united-red">Admin</p>

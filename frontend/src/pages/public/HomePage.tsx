@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { StatCard } from '../../components/StatCard';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useAuth } from '../../contexts/useAuth';
@@ -149,6 +150,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-8">
+      <PageMeta title={t('seo.home.title')} description={t('seo.home.description')} />
       <section className="panel-dark overflow-hidden">
         <div className="grid gap-8 p-6 md:grid-cols-[1fr_320px] md:p-8">
           <div>
@@ -233,6 +235,7 @@ export function HomePage() {
           eyebrow={t('admin.votes.title')}
           title={t('matches.availableVotesTitle')}
           description={t('matches.availableVotesDescription')}
+          titleAs="h2"
         />
 
         {!isAuthenticated ? (
@@ -280,6 +283,7 @@ export function HomePage() {
             eyebrow={t('navigation.matches')}
             title={t('matches.recentTitle')}
             description={t('matches.recentDescription')}
+            titleAs="h2"
           />
           {recentMatchesQuery.isLoading ? (
             <div className="panel p-5 text-sm font-semibold text-zinc-600">

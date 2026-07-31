@@ -20,6 +20,12 @@ const iconSizes = {
   lg: 'h-9 w-9',
 };
 
+const imageSizes = {
+  sm: 40,
+  md: 48,
+  lg: 80,
+};
+
 export function OpponentLogo({ opponentName, logoUrl, size = 'md' }: OpponentLogoProps) {
   const { t } = useTranslation();
   const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
@@ -29,6 +35,8 @@ export function OpponentLogo({ opponentName, logoUrl, size = 'md' }: OpponentLog
       <img
         src={logoUrl}
         alt={t('imageUpload.opponentLogoAlt', { opponent: opponentName })}
+        width={imageSizes[size]}
+        height={imageSizes[size]}
         className={`${sizes[size]} shrink-0 rounded-lg border border-zinc-200 bg-white object-contain p-1.5`}
         loading="lazy"
         onError={() => setFailedLogoUrl(logoUrl)}

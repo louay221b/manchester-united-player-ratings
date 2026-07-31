@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { PageHeader } from '../../components/PageHeader';
+import { PageMeta } from '../../components/PageMeta';
 import { StatCard } from '../../components/StatCard';
 import { usePlayer } from '../../hooks/use-players';
 import { useActiveSeasonRanking } from '../../hooks/use-season-ranking';
@@ -22,19 +23,32 @@ export function PlayerProfilePage() {
 
   if (!playerId) {
     return (
-      <PageHeader
-        eyebrow={t('players.player')}
-        title={t('players.notFound')}
-        description={t('players.missingId')}
-      />
+      <>
+        <PageMeta
+          title={t('seo.playerProfile.title')}
+          description={t('seo.playerProfile.description')}
+          robots="noindex, nofollow"
+        />
+        <PageHeader
+          eyebrow={t('players.player')}
+          title={t('players.notFound')}
+          description={t('players.missingId')}
+        />
+      </>
     );
   }
 
   if (playerQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">
-        {t('players.loadingProfile')}
-      </div>
+      <>
+        <PageMeta
+          title={t('seo.playerProfile.title')}
+          description={t('seo.playerProfile.description')}
+        />
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">
+          {t('players.loadingProfile')}
+        </div>
+      </>
     );
   }
 
@@ -43,6 +57,11 @@ export function PlayerProfilePage() {
 
     return (
       <div className="space-y-6">
+        <PageMeta
+          title={t('seo.playerProfile.title')}
+          description={t('seo.playerProfile.description')}
+          robots={isNotFound ? 'noindex, nofollow' : 'index, follow'}
+        />
         <PageHeader
           eyebrow={t('players.player')}
           title={isNotFound ? t('players.notFound') : t('players.profileUnavailable')}
@@ -76,6 +95,10 @@ export function PlayerProfilePage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta
+        title={player.displayName || t('seo.playerProfile.title')}
+        description={t('seo.playerProfile.description')}
+      />
       <section className="panel flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
         <ApiPlayerAvatar player={player} size="lg" />
         <div>
