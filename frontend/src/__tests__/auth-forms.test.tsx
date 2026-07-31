@@ -47,7 +47,7 @@ describe('auth forms', () => {
   it('shows a forgot-password link on login', () => {
     renderWithRouter(<LoginPage />);
 
-    expect(screen.getByRole('link', { name: 'Mot de passe oublie ?' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Mot de passe oublié ?' })).toHaveAttribute(
       'href',
       '/forgot-password',
     );
@@ -68,7 +68,7 @@ describe('auth forms', () => {
     fireEvent.change(screen.getByLabelText('Confirmation du mot de passe'), {
       target: { value: 'Different123!' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Creer le compte' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Créer le compte' }));
 
     expect(
       screen.getByText('La confirmation du mot de passe ne correspond pas.'),

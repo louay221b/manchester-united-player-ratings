@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ImageUploadField } from '../forms/ImageUploadField';
 import type { Player, PlayerPayload } from '../../types/player';
@@ -29,31 +31,31 @@ interface PlayerFormState {
   active: boolean;
 }
 
-const validatePlayerForm = (form: PlayerFormState) => {
+const validatePlayerForm = (form: PlayerFormState, t: TFunction<'common'>) => {
   const errors: Partial<Record<keyof PlayerFormState, string>> = {};
 
   if (!form.firstName.trim() || form.firstName.trim().length > 80) {
-    errors.firstName = 'Le prenom doit contenir entre 1 et 80 caracteres.';
+    errors.firstName = t('admin.players.firstNameLength');
   }
 
   if (!form.lastName.trim() || form.lastName.trim().length > 80) {
-    errors.lastName = 'Le nom doit contenir entre 1 et 80 caracteres.';
+    errors.lastName = t('admin.players.lastNameLength');
   }
 
   if (!form.position.trim() || form.position.trim().length > 80) {
-    errors.position = 'Le poste doit contenir entre 1 et 80 caracteres.';
+    errors.position = t('admin.players.positionLength');
   }
 
   if (form.shirtNumber.trim()) {
     const shirtNumber = Number(form.shirtNumber);
 
     if (!Number.isInteger(shirtNumber) || shirtNumber < 1 || shirtNumber > 99) {
-      errors.shirtNumber = 'Le numero doit etre compris entre 1 et 99.';
+      errors.shirtNumber = t('admin.players.shirtNumberRange');
     }
   }
 
   if (form.joinedAt && form.leftAt && form.leftAt < form.joinedAt) {
-    errors.leftAt = 'La date de depart ne peut pas preceder la date d arrivee.';
+    errors.leftAt = t('admin.players.leftAfterJoin');
   }
 
   return errors;
@@ -68,6 +70,7 @@ export function PlayerForm({
   onSubmit,
   onCancel,
 }: PlayerFormProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<PlayerFormState>({
     firstName: initialPlayer?.firstName ?? '',
     lastName: initialPlayer?.lastName ?? '',
@@ -89,7 +92,7 @@ export function PlayerForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validatePlayerForm(form);
+    const nextErrors = validatePlayerForm(form, t);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -119,11 +122,9 @@ export function PlayerForm({
     <form onSubmit={handleSubmit} className="panel space-y-4 p-5">
       <div>
         <h2 className="text-xl font-black text-zinc-950">
-          {initialPlayer ? 'Modifier le joueur' : 'Ajouter un joueur'}
+          {initialPlayer ? t('admin.players.edit') : t('admin.players.create')}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Upload via Supabase Storage, avec initiales en fallback public.
-        </p>
+        <p className="mt-1 text-sm text-zinc-500">{t('admin.players.storageHelp')}</p>
       </div>
 
       {serverError ? (
@@ -133,10 +134,12 @@ export function PlayerForm({
       ) : null}
 
       <ImageUploadField
-        label="Photo du joueur"
+        label={t('imageUpload.photoLabel')}
         currentImageUrl={initialPlayer?.photoUrl ?? null}
         placeholderLabel={placeholderLabel || 'MU'}
-        imageAlt={`Photo de ${form.firstName || 'joueur'} ${form.lastName || ''}`.trim()}
+        imageAlt={t('imageUpload.playerPhotoAlt', {
+          player: `${form.firstName || t('players.player')} ${form.lastName || ''}`.trim(),
+        })}
         selectedFile={selectedPhotoFile}
         removeRequested={removePhoto}
         isUploading={isUploading}
@@ -147,7 +150,7 @@ export function PlayerForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Prenom
+          {t('admin.players.firstName')}
           <input
             value={form.firstName}
             onChange={(event) =>
@@ -162,7 +165,7 @@ export function PlayerForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Nom
+          {t('admin.players.lastName')}
           <input
             value={form.lastName}
             onChange={(event) =>
@@ -175,7 +178,7 @@ export function PlayerForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Numero
+          {t('players.shirtNumber')}
           <input
             type="number"
             min="1"
@@ -193,21 +196,21 @@ export function PlayerForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Poste
+          {t('players.position')}
           <input
             value={form.position}
             onChange={(event) =>
               setForm((current) => ({ ...current, position: event.target.value }))
             }
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-            placeholder="Midfielder"
+            placeholder={t('players.positionPlaceholder')}
             disabled={isBusy}
           />
           {errors.position ? <span className="text-xs text-red-700">{errors.position}</span> : null}
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Date d arrivee
+          {t('admin.players.joinedAt')}
           <input
             type="date"
             value={form.joinedAt}
@@ -220,7 +223,7 @@ export function PlayerForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Date de depart
+          {t('admin.players.leftAt')}
           <input
             type="date"
             value={form.leftAt}
@@ -241,7 +244,7 @@ export function PlayerForm({
             className="h-4 w-4 accent-united-red"
             disabled={isBusy}
           />
-          Joueur actif
+          {t('admin.players.activePlayer')}
         </label>
       </div>
 
@@ -252,14 +255,14 @@ export function PlayerForm({
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           disabled={isBusy}
         >
-          Annuler
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           disabled={isBusy}
         >
-          {isBusy ? 'Enregistrement...' : submitLabel}
+          {isBusy ? t('common.saving') : submitLabel}
         </button>
       </div>
     </form>

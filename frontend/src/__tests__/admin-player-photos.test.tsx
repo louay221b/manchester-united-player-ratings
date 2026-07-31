@@ -122,7 +122,7 @@ describe('AdminPlayerPhotosPage', () => {
 
     const file = new File([new Uint8Array(128)], 'bruno.webp', { type: 'image/webp' });
 
-    fireEvent.change(screen.getByLabelText('Selectionner une photo pour Bruno Fernandes'), {
+    fireEvent.change(screen.getByLabelText('Sélectionner une photo pour Bruno Fernandes'), {
       target: {
         files: [file],
       },
@@ -130,7 +130,7 @@ describe('AdminPlayerPhotosPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Envoyer' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Photo envoyee.')).toBeInTheDocument();
+      expect(screen.getByText('Photo envoyée.')).toBeInTheDocument();
     });
 
     expect(validateImageFile).toHaveBeenCalledWith(file);
@@ -147,14 +147,14 @@ describe('AdminPlayerPhotosPage', () => {
 
     const file = new File([new Uint8Array(128)], 'unknown-file-name.webp', { type: 'image/webp' });
 
-    fireEvent.change(screen.getByLabelText('Selectionner plusieurs photos'), {
+    fireEvent.change(screen.getByLabelText('Sélectionner plusieurs photos'), {
       target: {
         files: [file],
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Envoyer l import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer l’import' }));
 
-    expect(await screen.findByText('Selectionne un joueur pour ce fichier.')).toBeInTheDocument();
+    expect(await screen.findByText('Sélectionne un joueur pour ce fichier.')).toBeInTheDocument();
     expect(uploadPlayerPhoto).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText('Joueur correspondant'), {
@@ -162,10 +162,10 @@ describe('AdminPlayerPhotosPage', () => {
         value: testPlayer.id,
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Envoyer l import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer l’import' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Photo envoyee.')).toBeInTheDocument();
+      expect(screen.getByText('Photo envoyée.')).toBeInTheDocument();
     });
 
     expect(uploadPlayerPhoto).toHaveBeenCalledWith(testPlayer.id, file);

@@ -1,5 +1,6 @@
 import { Shield } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface OpponentLogoProps {
   opponentName: string;
@@ -20,13 +21,14 @@ const iconSizes = {
 };
 
 export function OpponentLogo({ opponentName, logoUrl, size = 'md' }: OpponentLogoProps) {
+  const { t } = useTranslation();
   const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
 
   if (logoUrl && failedLogoUrl !== logoUrl) {
     return (
       <img
         src={logoUrl}
-        alt={`Logo de ${opponentName}`}
+        alt={t('imageUpload.opponentLogoAlt', { opponent: opponentName })}
         className={`${sizes[size]} shrink-0 rounded-lg border border-zinc-200 bg-white object-contain p-1.5`}
         loading="lazy"
         onError={() => setFailedLogoUrl(logoUrl)}
@@ -37,7 +39,7 @@ export function OpponentLogo({ opponentName, logoUrl, size = 'md' }: OpponentLog
   return (
     <span
       className={`${sizes[size]} flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-500`}
-      aria-label={`Logo indisponible pour ${opponentName}`}
+      aria-label={t('imageUpload.opponentFallbackAlt', { opponent: opponentName })}
       role="img"
     >
       <Shield className={iconSizes[size]} aria-hidden="true" />

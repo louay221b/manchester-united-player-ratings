@@ -49,7 +49,7 @@ describe('ImageUploadField', () => {
   it('shows a local preview with the selected file name and size', () => {
     render(<TestImageUploadField />);
 
-    fireEvent.change(screen.getByLabelText('Selectionner Photo du joueur'), {
+    fireEvent.change(screen.getByLabelText('Sélectionner Photo du joueur'), {
       target: {
         files: [createFile('mainoo.png', 'image/png', 2048)],
       },
@@ -60,7 +60,7 @@ describe('ImageUploadField', () => {
       'blob:preview-url',
     );
     expect(screen.getByText('mainoo.png')).toBeInTheDocument();
-    expect(screen.getByText('2 Ko')).toBeInTheDocument();
+    expect(screen.getByText('2 KB')).toBeInTheDocument();
   });
 
   it('marks the current image for removal without requiring a new file', () => {
@@ -74,13 +74,13 @@ describe('ImageUploadField', () => {
     fireEvent.click(screen.getByRole('button', { name: /Supprimer/ }));
 
     expect(screen.getByRole('img', { name: 'KM' })).toBeInTheDocument();
-    expect(screen.getByText('L image sera retiree apres enregistrement.')).toBeInTheDocument();
+    expect(screen.getByText('L’image sera retirée après enregistrement.')).toBeInTheDocument();
   });
 
   it('rejects invalid files before preview', () => {
     render(<TestImageUploadField />);
 
-    fireEvent.change(screen.getByLabelText('Selectionner Photo du joueur'), {
+    fireEvent.change(screen.getByLabelText('Sélectionner Photo du joueur'), {
       target: {
         files: [createFile('notes.pdf', 'application/pdf')],
       },

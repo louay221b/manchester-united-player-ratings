@@ -1,4 +1,5 @@
 import { ArrowRight, BarChart3, CalendarDays, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
@@ -12,6 +13,7 @@ import { usePlayers } from '../../hooks/use-players';
 import { useActiveSeasonRanking } from '../../hooks/use-season-ranking';
 import { useSeasons } from '../../hooks/use-seasons';
 import { useVotingMatches } from '../../hooks/use-voting-matches';
+import { useFormatters } from '../../i18n/format';
 import type { Match, MatchFilters } from '../../types/match';
 import type { PlayerFilters } from '../../types/player';
 import type { RankingFilters, SeasonRankingRow } from '../../types/ranking';
@@ -21,22 +23,10 @@ const openMatchesFilters: MatchFilters = { page: 1, limit: 1, votingStatus: 'ope
 const activePlayersFilters: PlayerFilters = { page: 1, limit: 1, active: true };
 const homeRankingFilters: RankingFilters = { active: true };
 
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(date));
-
-const formatScore = (match: Match) => {
-  if (match.manchesterUnitedScore === null || match.opponentScore === null) {
-    return 'A venir';
-  }
-
-  return `${match.manchesterUnitedScore}-${match.opponentScore}`;
-};
-
 function RecentMatchCard({ match }: { match: Match }) {
+  const { t } = useTranslation();
+  const { formatDate, formatScore } = useFormatters();
+
   return (
     <article className="panel overflow-hidden">
       <div className="border-b border-zinc-200 bg-white p-5">
@@ -54,19 +44,26 @@ function RecentMatchCard({ match }: { match: Match }) {
               </h2>
             </div>
             <p className="mt-2 text-sm text-zinc-500">
-              {formatDate(match.matchDate)} - {match.venue ?? 'Lieu a confirmer'}
+              {formatDate(match.matchDate, {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+              })}{' '}
+              - {match.venue ?? t('matches.venueTbc')}
             </p>
           </div>
           <VoteStatusBadge status={match.votingStatus} />
         </div>
-        <p className="mt-4 text-3xl font-black text-zinc-950">{formatScore(match)}</p>
+        <p className="mt-4 text-3xl font-black text-zinc-950">
+          {formatScore(match.manchesterUnitedScore, match.opponentScore, t('common.upcoming'))}
+        </p>
       </div>
       <div className="flex flex-wrap gap-2 bg-zinc-50 px-5 py-4">
         <Link
           to={`/matches/${match.id}`}
           className="inline-flex items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-bold text-zinc-700 hover:border-united-red hover:text-united-red"
         >
-          Details
+          {t('common.details')}
           <ArrowRight size={16} aria-hidden="true" />
         </Link>
         {match.votingStatus === 'open' ? (
@@ -74,7 +71,7 @@ function RecentMatchCard({ match }: { match: Match }) {
             to={`/matches/${match.id}/vote`}
             className="inline-flex items-center gap-2 rounded-md bg-united-red px-3 py-2 text-sm font-bold text-white hover:bg-red-800"
           >
-            Voter
+            {t('common.vote')}
             <Star size={16} aria-hidden="true" />
           </Link>
         ) : null}
@@ -83,7 +80,7 @@ function RecentMatchCard({ match }: { match: Match }) {
             to={`/matches/${match.id}/results`}
             className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-3 py-2 text-sm font-bold text-white hover:bg-zinc-800"
           >
-            Resultats
+            {t('common.results')}
             <BarChart3 size={16} aria-hidden="true" />
           </Link>
         ) : null}
@@ -93,6 +90,8 @@ function RecentMatchCard({ match }: { match: Match }) {
 }
 
 function RankingLeaderCard({ player }: { player: SeasonRankingRow }) {
+  const { t } = useTranslation();
+  const { formatNumber, formatRating } = useFormatters();
   const displayName = `${player.firstName} ${player.lastName}`;
 
   return (
@@ -110,22 +109,26 @@ function RankingLeaderCard({ player }: { player: SeasonRankingRow }) {
       />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-bold text-zinc-950">
-          {player.shirtNumber ? `#${player.shirtNumber} ` : ''}
+          {player.shirtNumber ? `#${formatNumber(player.shirtNumber)} ` : ''}
           {displayName}
         </span>
         <span className="mt-1 block text-sm text-zinc-500">{player.position}</span>
       </span>
-      <span className="text-right">
+      <span className="text-end">
         <span className="block text-xl font-black text-united-red">
-          {player.seasonAverage === null ? '—' : player.seasonAverage.toFixed(2)}
+          {formatRating(player.seasonAverage)}
         </span>
-        <span className="text-xs font-semibold uppercase text-zinc-500">moy.</span>
+        <span className="text-xs font-semibold uppercase text-zinc-500">
+          {t('ranking.averageShort')}
+        </span>
       </span>
     </Link>
   );
 }
 
 export function HomePage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const { isAuthenticated, isLoading } = useAuth();
   const seasonsQuery = useSeasons();
   const recentMatchesQuery = useMatches(recentMatchesFilters);
@@ -150,14 +153,13 @@ export function HomePage() {
         <div className="grid gap-8 p-6 md:grid-cols-[1fr_320px] md:p-8">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.14em] text-red-200">
-              Manchester United
+              {t('brand.name')}
             </p>
             <h1 className="mt-4 text-4xl font-black tracking-normal text-white md:text-5xl">
-              Player Ratings
+              {t('brand.title')}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-300">
-              Note les joueurs apres les matchs, consulte les resultats publies et suis le
-              classement de saison calcule depuis les moyennes par match.
+              {t('home.heroDescription')}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -165,32 +167,36 @@ export function HomePage() {
                 className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
               >
                 <Star size={18} aria-hidden="true" />
-                Noter un match
+                {t('home.rateMatch')}
               </Link>
               <Link
                 to="/ranking"
                 className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-4 py-2 text-sm font-black text-white hover:border-white"
               >
                 <BarChart3 size={18} aria-hidden="true" />
-                Classement
+                {t('navigation.ranking')}
               </Link>
             </div>
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm font-bold text-zinc-400">Saison active</p>
+            <p className="text-sm font-bold text-zinc-400">{t('common.activeSeason')}</p>
             <p className="mt-2 text-2xl font-black text-white">
-              {seasonsQuery.isLoading ? 'Chargement...' : (activeSeason?.name ?? 'Aucune saison')}
+              {seasonsQuery.isLoading
+                ? t('common.loading')
+                : (activeSeason?.name ?? t('common.noneAvailable'))}
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-zinc-950 p-4">
                 <p className="text-3xl font-black text-white">
-                  {recentMatchesQuery.data?.pagination.total ?? '—'}
+                  {recentMatchesQuery.data
+                    ? formatNumber(recentMatchesQuery.data.pagination.total)
+                    : t('common.dash')}
                 </p>
-                <p className="text-sm text-zinc-400">matchs</p>
+                <p className="text-sm text-zinc-400">{t('navigation.matches')}</p>
               </div>
               <div className="rounded-lg bg-zinc-950 p-4">
-                <p className="text-3xl font-black text-white">{publishedVoteCount}</p>
-                <p className="text-sm text-zinc-400">votes publies</p>
+                <p className="text-3xl font-black text-white">{formatNumber(publishedVoteCount)}</p>
+                <p className="text-sm text-zinc-400">{t('home.publishedVotes')}</p>
               </div>
             </div>
           </div>
@@ -198,51 +204,64 @@ export function HomePage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Votes ouverts" value={openMatchesQuery.data?.pagination.total ?? '—'} />
         <StatCard
-          label="Joueurs actifs"
-          value={activePlayersQuery.data?.pagination.total ?? '—'}
-          helper="Effectif API"
+          label={t('statuses.voting.open')}
+          value={
+            openMatchesQuery.data
+              ? formatNumber(openMatchesQuery.data.pagination.total)
+              : t('common.dash')
+          }
         />
-        <StatCard label="Saison" value={activeSeason?.name ?? '—'} helper="Saison active" />
+        <StatCard
+          label={t('home.activePlayers')}
+          value={
+            activePlayersQuery.data
+              ? formatNumber(activePlayersQuery.data.pagination.total)
+              : t('common.dash')
+          }
+          helper="API"
+        />
+        <StatCard
+          label={t('common.season')}
+          value={activeSeason?.name ?? t('common.dash')}
+          helper={t('common.activeSeason')}
+        />
       </section>
 
       <section className="space-y-4">
         <PageHeader
-          eyebrow="Votes"
-          title="Votes disponibles"
-          description="Les matchs termines apparaissent ici automatiquement quand les votes sont ouverts."
+          eyebrow={t('admin.votes.title')}
+          title={t('matches.availableVotesTitle')}
+          description={t('matches.availableVotesDescription')}
         />
 
         {!isAuthenticated ? (
           <div className="panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-semibold text-zinc-600">
-              Connecte-toi pour ouvrir ton bulletin et enregistrer tes notes.
-            </p>
+            <p className="text-sm font-semibold text-zinc-600">{t('matches.signInToVote')}</p>
             <Link
               to="/login"
               className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
             >
-              Connexion
+              {t('navigation.signIn')}
             </Link>
           </div>
         ) : null}
 
         {isAuthenticated && votingMatchesQuery.isLoading ? (
           <div className="panel p-5 text-sm font-semibold text-zinc-600">
-            Chargement des votes disponibles...
+            {t('matches.loadingVotes')}
           </div>
         ) : null}
 
         {isAuthenticated && votingMatchesQuery.isError ? (
           <div className="panel p-5 text-sm font-semibold text-red-700">
-            Impossible de charger les votes disponibles.
+            {t('matches.loadVotesError')}
           </div>
         ) : null}
 
         {isAuthenticated && votingMatchesQuery.isSuccess && votingMatchesQuery.data.length === 0 ? (
           <div className="panel p-5 text-sm font-semibold text-zinc-600">
-            Aucun match ouvert au vote pour le moment.
+            {t('matches.noOpenVotes')}
           </div>
         ) : null}
 
@@ -258,23 +277,23 @@ export function HomePage() {
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <PageHeader
-            eyebrow="Matchs"
-            title="Affiches recentes"
-            description="Manchester United reste l equipe principale, seul l adversaire change."
+            eyebrow={t('navigation.matches')}
+            title={t('matches.recentTitle')}
+            description={t('matches.recentDescription')}
           />
           {recentMatchesQuery.isLoading ? (
             <div className="panel p-5 text-sm font-semibold text-zinc-600">
-              Chargement des matchs...
+              {t('matches.loadingRecent')}
             </div>
           ) : null}
           {recentMatchesQuery.isError ? (
             <div className="panel p-5 text-sm font-semibold text-red-700">
-              Impossible de charger les matchs recents.
+              {t('matches.loadRecentError')}
             </div>
           ) : null}
           {recentMatchesQuery.isSuccess && recentMatches.length === 0 ? (
             <div className="panel p-5 text-sm font-semibold text-zinc-600">
-              Aucun match cree pour le moment.
+              {t('matches.noMatchesYet')}
             </div>
           ) : null}
           <div className="grid gap-4">
@@ -287,21 +306,21 @@ export function HomePage() {
         <aside className="space-y-4">
           <div className="flex items-center gap-2">
             <CalendarDays size={20} className="text-united-red" aria-hidden="true" />
-            <h2 className="text-xl font-black text-zinc-950">Top saison</h2>
+            <h2 className="text-xl font-black text-zinc-950">{t('ranking.topSeason')}</h2>
           </div>
           {rankingQuery.isLoading ? (
             <div className="panel p-5 text-sm font-semibold text-zinc-600">
-              Chargement du classement...
+              {t('ranking.loading')}
             </div>
           ) : null}
           {rankingQuery.isError ? (
             <div className="panel p-5 text-sm font-semibold text-red-700">
-              Impossible de charger le classement public.
+              {t('ranking.loadError')}
             </div>
           ) : null}
           {rankingQuery.isSuccess && leaders.length === 0 ? (
             <div className="panel p-5 text-sm font-semibold text-zinc-600">
-              Aucun resultat publie pour le moment.
+              {t('ranking.noPublished')}
             </div>
           ) : null}
           <div className="grid gap-3">

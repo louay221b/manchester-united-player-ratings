@@ -1,24 +1,13 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
 import { supabase } from '../../lib/supabase';
-import { AccountError, updatePassword } from '../../services/account.service';
+import { updatePassword } from '../../services/account.service';
 
 type RecoveryStatus = 'checking' | 'ready' | 'invalid' | 'success';
-
-const validatePassword = (password: string, confirmPassword: string) => {
-  if (password.length < 8) {
-    return 'Le mot de passe doit contenir au moins 8 caracteres.';
-  }
-
-  if (password !== confirmPassword) {
-    return 'La confirmation du mot de passe ne correspond pas.';
-  }
-
-  return null;
-};
 
 const hasRecoveryHint = () => {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -31,12 +20,8 @@ const hasRecoveryHint = () => {
   );
 };
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof AccountError || error instanceof Error
-    ? error.message
-    : 'Impossible de definir le nouveau mot de passe.';
-
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const hasLinkHint = useMemo(() => hasRecoveryHint(), []);
   const [status, setStatus] = useState<RecoveryStatus>(hasLinkHint ? 'checking' : 'invalid');
@@ -45,6 +30,18 @@ export function ResetPasswordPage() {
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const validatePassword = (password: string, confirmation: string) => {
+    if (password.length < 8) {
+      return t('auth.register.shortPassword');
+    }
+
+    if (password !== confirmation) {
+      return t('auth.register.passwordMismatch');
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -110,8 +107,8 @@ export function ResetPasswordPage() {
       setNewPassword('');
       setConfirmPassword('');
       setStatus('success');
-    } catch (error) {
-      setFormError(getErrorMessage(error));
+    } catch {
+      setFormError(t('auth.resetPassword.failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -120,42 +117,40 @@ export function ResetPasswordPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader
-        eyebrow="Compte supporter"
-        title="Nouveau mot de passe"
-        description="Definis un nouveau mot de passe apres avoir ouvert le lien de recuperation."
+        eyebrow={t('auth.accountEyebrow')}
+        title={t('auth.resetPassword.title')}
+        description={t('auth.resetPassword.description')}
       />
 
       {status === 'checking' ? (
         <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Verification du lien de recuperation...
+          {t('auth.resetPassword.checking')}
         </div>
       ) : null}
 
       {status === 'invalid' ? (
         <section className="panel space-y-4 border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <p className="font-black">Lien expire ou invalide.</p>
-          <p className="text-sm font-semibold">
-            Demande un nouveau lien de recuperation pour definir un mot de passe.
-          </p>
+          <p className="font-black">{t('auth.resetPassword.invalidTitle')}</p>
+          <p className="text-sm font-semibold">{t('auth.resetPassword.invalidDescription')}</p>
           <Link
             to="/forgot-password"
             className="inline-flex rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
-            Demander un nouveau lien
+            {t('auth.resetPassword.requestNewLink')}
           </Link>
         </section>
       ) : null}
 
       {status === 'success' ? (
         <section className="panel border-emerald-200 bg-emerald-50 p-6 text-sm font-semibold text-emerald-800">
-          Mot de passe mis a jour. Redirection vers ton profil...
+          {t('auth.resetPassword.success')}
         </section>
       ) : null}
 
       {status === 'ready' ? (
         <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
           <label className="block">
-            <span className="text-sm font-bold text-zinc-700">Nouveau mot de passe</span>
+            <span className="text-sm font-bold text-zinc-700">{t('auth.newPassword')}</span>
             <span className="mt-2 flex rounded-md border border-zinc-300 bg-white focus-within:ring-2 focus-within:ring-united-red/30">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -169,7 +164,7 @@ export function ResetPasswordPage() {
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
                 className="px-3 text-zinc-600 hover:text-zinc-950"
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -180,7 +175,7 @@ export function ResetPasswordPage() {
             </span>
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-zinc-700">Confirmation</span>
+            <span className="text-sm font-bold text-zinc-700">{t('auth.confirmPassword')}</span>
             <input
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
@@ -200,7 +195,7 @@ export function ResetPasswordPage() {
             disabled={isSubmitting}
             className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           >
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer le nouveau mot de passe'}
+            {isSubmitting ? t('common.saving') : t('auth.resetPassword.submit')}
           </button>
         </form>
       ) : null}

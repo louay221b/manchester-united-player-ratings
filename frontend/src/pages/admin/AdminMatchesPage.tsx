@@ -1,6 +1,7 @@
 import { Eye, EyeOff, ListChecks, Pencil, Plus, SquareCheckBig, Trash2 } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation } from 'react-router';
 
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { FinishMatchForm } from '../../components/admin/FinishMatchForm';
@@ -10,13 +11,13 @@ import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatchMutations, useMatches } from '../../hooks/use-matches';
 import { useSeasons } from '../../hooks/use-seasons';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import {
   removeOpponentLogo as removeStoredOpponentLogo,
-  StorageValidationError,
   uploadOpponentLogo,
 } from '../../services/storage.service';
-import type { Match, MatchPayload, MatchStatus } from '../../types/match';
+import type { Match, MatchPayload } from '../../types/match';
 
 interface Notification {
   type: 'success' | 'error' | 'warning';
@@ -24,19 +25,6 @@ interface Notification {
 }
 
 const pageSize = 20;
-
-const matchStatusLabels: Record<MatchStatus, string> = {
-  scheduled: 'Programme',
-  finished: 'Termine',
-  cancelled: 'Annule',
-};
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError || error instanceof StorageValidationError
-    ? error.message
-    : error instanceof Error
-      ? error.message
-      : fallback;
 
 const cleanupUploadedLogo = async (path: string | null) => {
   if (!path) {
@@ -51,24 +39,9 @@ const cleanupUploadedLogo = async (path: string | null) => {
   }
 };
 
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-
-const formatScore = (match: Match) => {
-  if (match.manchesterUnitedScore === null || match.opponentScore === null) {
-    return 'A venir';
-  }
-
-  return `${match.manchesterUnitedScore}-${match.opponentScore}`;
-};
-
 export function AdminMatchesPage() {
+  const { t } = useTranslation();
+  const { formatDate, formatScore } = useFormatters();
   const [page] = useState(1);
   const location = useLocation();
   const routeMessage =
@@ -130,7 +103,7 @@ export function AdminMatchesPage() {
 
     if (!logoChange.file) {
       closeForm();
-      setNotification({ type: 'success', message: 'Match cree.' });
+      setNotification({ type: 'success', message: t('admin.matches.created') });
       return;
     }
 
@@ -146,16 +119,11 @@ export function AdminMatchesPage() {
         },
       });
       closeForm();
-      setNotification({ type: 'success', message: 'Match cree avec logo.' });
+      setNotification({ type: 'success', message: t('admin.matches.createdWithLogo') });
     } catch (error) {
       await cleanupUploadedLogo(uploadedLogo?.path ?? null);
       setEditingMatch(createdMatch);
-      setFormError(
-        getErrorMessage(
-          error,
-          'Match cree, mais le logo n a pas ete envoye. Ouvre le match pour reessayer.',
-        ),
-      );
+      setFormError(translateApiError(error, t, 'admin.matches.createdLogoFailed'));
     }
   };
 
@@ -183,8 +151,8 @@ export function AdminMatchesPage() {
         setNotification({
           type: cleanupWarning ? 'warning' : 'success',
           message: cleanupWarning
-            ? 'Match modifie. Ancien logo non supprime automatiquement.'
-            : 'Match modifie.',
+            ? t('admin.matches.updatedOldLogoWarning')
+            : t('admin.matches.updated'),
         });
       } catch (error) {
         await cleanupUploadedLogo(uploadedLogo?.path ?? null);
@@ -209,15 +177,15 @@ export function AdminMatchesPage() {
       setNotification({
         type: cleanupWarning ? 'warning' : 'success',
         message: cleanupWarning
-          ? 'Match modifie. Logo Storage non supprime automatiquement.'
-          : 'Match modifie.',
+          ? t('admin.matches.updatedStorageWarning')
+          : t('admin.matches.updated'),
       });
       return;
     }
 
     await updateMatch.mutateAsync({ matchId: match.id, payload });
     closeForm();
-    setNotification({ type: 'success', message: 'Match modifie.' });
+    setNotification({ type: 'success', message: t('admin.matches.updated') });
   };
 
   const handleSubmit = (payload: MatchPayload, logoChange: MatchLogoChange) => {
@@ -232,9 +200,10 @@ export function AdminMatchesPage() {
     void operation
       .catch((error: unknown) => {
         setFormError(
-          getErrorMessage(
+          translateApiError(
             error,
-            editingMatch ? 'Impossible de modifier le match.' : 'Impossible de creer le match.',
+            t,
+            editingMatch ? 'admin.matches.updateFailed' : 'admin.matches.createFailed',
           ),
         );
       })
@@ -257,11 +226,11 @@ export function AdminMatchesPage() {
           setMatchToFinish(undefined);
           setNotification({
             type: 'success',
-            message: 'Match termine. Les votes sont ouverts automatiquement.',
+            message: t('admin.matches.finished'),
           });
         },
         onError: (error) => {
-          setFinishError(getErrorMessage(error, 'Impossible de terminer le match.'));
+          setFinishError(translateApiError(error, t, 'admin.matches.finishFailed'));
         },
       },
     );
@@ -278,48 +247,79 @@ export function AdminMatchesPage() {
         setNotification({
           type: hasWarnings ? 'warning' : 'success',
           message: hasWarnings
-            ? 'Match supprime. Logo Storage non supprime automatiquement.'
-            : 'Match supprime.',
+            ? t('admin.matches.deletedStorageWarning')
+            : t('admin.matches.deleted'),
         });
         setMatchToDelete(undefined);
       },
       onError: (error) => {
         setNotification({
           type: 'error',
-          message: getErrorMessage(error, 'Impossible de supprimer ce match.'),
+          message: translateApiError(error, t, 'admin.matches.deleteFailed'),
         });
         setMatchToDelete(undefined);
       },
     });
   };
 
-  const handleSimpleMutation = (
-    action: () => void,
-    successMessage: string,
-    fallbackError: string,
-    mutationState: { isPending: boolean },
-  ) => {
-    if (mutationState.isPending) {
+  const handleCloseVoting = (match: Match) => {
+    if (closeMatchVoting.isPending) {
       return;
     }
 
     setNotification(null);
+    closeMatchVoting.mutate(match.id, {
+      onSuccess: () =>
+        setNotification({
+          type: 'success',
+          message: t('admin.matches.votingClosed'),
+        }),
+      onError: (error) =>
+        setNotification({
+          type: 'error',
+          message: translateApiError(error, t, 'admin.matches.closeVotingFailed'),
+        }),
+    });
+  };
 
-    try {
-      action();
-    } catch {
-      setNotification({ type: 'error', message: fallbackError });
-    }
+  const handlePublishResults = (match: Match) => {
+    setNotification(null);
+    publishMatchResults.mutate(match.id, {
+      onSuccess: () =>
+        setNotification({
+          type: 'success',
+          message: t('admin.matches.resultsPublished'),
+        }),
+      onError: (error) =>
+        setNotification({
+          type: 'error',
+          message: translateApiError(error, t, 'admin.matches.publishResultsFailed'),
+        }),
+    });
+  };
 
-    void successMessage;
+  const handleHideResults = (match: Match) => {
+    setNotification(null);
+    unpublishMatchResults.mutate(match.id, {
+      onSuccess: () =>
+        setNotification({
+          type: 'success',
+          message: t('admin.matches.resultsHidden'),
+        }),
+      onError: (error) =>
+        setNotification({
+          type: 'error',
+          message: translateApiError(error, t, 'admin.matches.hideResultsFailed'),
+        }),
+    });
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Gestion des matchs"
-        description="Creer les matchs, gerer les compositions et ouvrir les votes via la finalisation du match."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.matches.title')}
+        description={t('admin.matches.description')}
         action={
           <button
             type="button"
@@ -327,7 +327,7 @@ export function AdminMatchesPage() {
             className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Creer
+            {t('common.create')}
           </button>
         }
       />
@@ -357,7 +357,7 @@ export function AdminMatchesPage() {
           key={editingMatch?.id ?? 'create'}
           seasons={seasonsQuery.data ?? []}
           initialMatch={editingMatch}
-          submitLabel={editingMatch ? 'Modifier' : 'Creer'}
+          submitLabel={editingMatch ? t('common.edit') : t('common.create')}
           isSubmitting={isSubmitting || seasonsQuery.isLoading}
           isUploading={isAssetProcessing}
           serverError={formError}
@@ -381,26 +381,28 @@ export function AdminMatchesPage() {
 
       <section className="panel overflow-hidden">
         {matchesQuery.isLoading ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Chargement des matchs...</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">
+            {t('admin.matches.loading')}
+          </div>
         ) : null}
 
         {matchesQuery.isError ? (
           <div className="space-y-3 p-6">
             <p className="text-sm font-semibold text-red-700">
-              {getErrorMessage(matchesQuery.error, 'Impossible de charger les matchs.')}
+              {translateApiError(matchesQuery.error, t, 'admin.matches.loadError')}
             </p>
             <button
               type="button"
               onClick={() => void matchesQuery.refetch()}
               className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
             >
-              Reessayer
+              {t('common.retry')}
             </button>
           </div>
         ) : null}
 
         {matchesQuery.isSuccess && matchesQuery.data.data.length === 0 ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Aucun match cree.</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">{t('admin.matches.empty')}</div>
         ) : null}
 
         {matchesQuery.isSuccess && matchesQuery.data.data.length > 0 ? (
@@ -408,13 +410,13 @@ export function AdminMatchesPage() {
             <table className="min-w-full divide-y divide-zinc-200">
               <thead className="bg-zinc-50">
                 <tr>
-                  <th className="table-head">Match</th>
-                  <th className="table-head">Competition</th>
-                  <th className="table-head">Date</th>
-                  <th className="table-head">Score</th>
-                  <th className="table-head">Statut</th>
-                  <th className="table-head">Votes</th>
-                  <th className="table-head text-right">Actions</th>
+                  <th className="table-head">{t('navigation.matchesAdmin')}</th>
+                  <th className="table-head">{t('admin.matches.competition')}</th>
+                  <th className="table-head">{t('admin.matches.date')}</th>
+                  <th className="table-head">{t('common.score')}</th>
+                  <th className="table-head">{t('common.status')}</th>
+                  <th className="table-head">{t('admin.votes.title')}</th>
+                  <th className="table-head text-end">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 bg-white">
@@ -431,9 +433,23 @@ export function AdminMatchesPage() {
                       </span>
                     </td>
                     <td className="table-cell">{match.competition}</td>
-                    <td className="table-cell">{formatDate(match.matchDate)}</td>
-                    <td className="table-cell font-black text-zinc-950">{formatScore(match)}</td>
-                    <td className="table-cell">{matchStatusLabels[match.status]}</td>
+                    <td className="table-cell">
+                      {formatDate(match.matchDate, {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="table-cell font-black text-zinc-950">
+                      {formatScore(
+                        match.manchesterUnitedScore,
+                        match.opponentScore,
+                        t('common.upcoming'),
+                      )}
+                    </td>
+                    <td className="table-cell">{t(`statuses.match.${match.status}`)}</td>
                     <td className="table-cell">
                       <VoteStatusBadge status={match.votingStatus} />
                     </td>
@@ -445,17 +461,17 @@ export function AdminMatchesPage() {
                               type="button"
                               onClick={() => openEditForm(match)}
                               className="rounded-md border border-zinc-300 p-2 text-zinc-700 hover:bg-zinc-100"
-                              title="Modifier"
+                              title={t('common.edit')}
                             >
                               <Pencil className="h-4 w-4" aria-hidden="true" />
-                              <span className="sr-only">Modifier</span>
+                              <span className="sr-only">{t('common.edit')}</span>
                             </button>
                             <Link
                               to={`/admin/matches/${match.id}/lineup`}
                               className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm font-bold text-zinc-700 hover:border-united-red hover:text-united-red"
                             >
                               <ListChecks className="h-4 w-4" aria-hidden="true" />
-                              Composition
+                              {t('admin.matches.lineup')}
                             </Link>
                             <button
                               type="button"
@@ -466,16 +482,16 @@ export function AdminMatchesPage() {
                               className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-3 py-2 text-sm font-bold text-white hover:bg-zinc-800"
                             >
                               <SquareCheckBig className="h-4 w-4" aria-hidden="true" />
-                              Terminer
+                              {t('admin.matches.finish')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setMatchToDelete(match)}
                               className="rounded-md border border-red-200 p-2 text-red-700 hover:bg-red-50"
-                              title="Supprimer"
+                              title={t('common.delete')}
                             >
                               <Trash2 className="h-4 w-4" aria-hidden="true" />
-                              <span className="sr-only">Supprimer</span>
+                              <span className="sr-only">{t('common.delete')}</span>
                             </button>
                           </>
                         ) : null}
@@ -486,37 +502,15 @@ export function AdminMatchesPage() {
                               to={`/admin/matches/${match.id}/votes`}
                               className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-bold text-white hover:bg-zinc-800"
                             >
-                              Voir les votes
+                              {t('admin.matches.viewVotes')}
                             </Link>
                             <button
                               type="button"
-                              onClick={() =>
-                                handleSimpleMutation(
-                                  () =>
-                                    closeMatchVoting.mutate(match.id, {
-                                      onSuccess: () =>
-                                        setNotification({
-                                          type: 'success',
-                                          message: 'Votes clotures.',
-                                        }),
-                                      onError: (error) =>
-                                        setNotification({
-                                          type: 'error',
-                                          message: getErrorMessage(
-                                            error,
-                                            'Impossible de cloturer les votes.',
-                                          ),
-                                        }),
-                                    }),
-                                  'Votes clotures.',
-                                  'Impossible de cloturer les votes.',
-                                  closeMatchVoting,
-                                )
-                              }
+                              onClick={() => handleCloseVoting(match)}
                               className="rounded-md bg-united-red px-3 py-2 text-sm font-bold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
                               disabled={closeMatchVoting.isPending}
                             >
-                              Cloturer les votes
+                              {t('admin.matches.closeVoting')}
                             </button>
                           </>
                         ) : null}
@@ -527,59 +521,27 @@ export function AdminMatchesPage() {
                               to={`/admin/matches/${match.id}/votes`}
                               className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-bold text-white hover:bg-zinc-800"
                             >
-                              Voir les resultats
+                              {t('admin.matches.viewResults')}
                             </Link>
                             {match.resultsPublished ? (
                               <button
                                 type="button"
-                                onClick={() =>
-                                  unpublishMatchResults.mutate(match.id, {
-                                    onSuccess: () =>
-                                      setNotification({
-                                        type: 'success',
-                                        message: 'Resultats masques.',
-                                      }),
-                                    onError: (error) =>
-                                      setNotification({
-                                        type: 'error',
-                                        message: getErrorMessage(
-                                          error,
-                                          'Impossible de masquer les resultats.',
-                                        ),
-                                      }),
-                                  })
-                                }
+                                onClick={() => handleHideResults(match)}
                                 className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-100"
                                 disabled={unpublishMatchResults.isPending}
                               >
                                 <EyeOff className="h-4 w-4" aria-hidden="true" />
-                                Masquer
+                                {t('common.hide')}
                               </button>
                             ) : (
                               <button
                                 type="button"
-                                onClick={() =>
-                                  publishMatchResults.mutate(match.id, {
-                                    onSuccess: () =>
-                                      setNotification({
-                                        type: 'success',
-                                        message: 'Resultats publies.',
-                                      }),
-                                    onError: (error) =>
-                                      setNotification({
-                                        type: 'error',
-                                        message: getErrorMessage(
-                                          error,
-                                          'Impossible de publier les resultats.',
-                                        ),
-                                      }),
-                                  })
-                                }
+                                onClick={() => handlePublishResults(match)}
                                 className="inline-flex items-center gap-2 rounded-md bg-united-red px-3 py-2 text-sm font-bold text-white hover:bg-red-800"
                                 disabled={publishMatchResults.isPending}
                               >
                                 <Eye className="h-4 w-4" aria-hidden="true" />
-                                Publier
+                                {t('common.publish')}
                               </button>
                             )}
                           </>
@@ -596,9 +558,9 @@ export function AdminMatchesPage() {
 
       {matchToDelete ? (
         <ConfirmDialog
-          title="Supprimer le match"
-          message={`Supprimer Manchester United vs ${matchToDelete.opponentName} ? L API refusera la suppression si le match n est plus programme ou possede des votes.`}
-          confirmLabel="Supprimer"
+          title={t('admin.matches.deleteTitle')}
+          message={t('admin.matches.deleteMessage', { opponent: matchToDelete.opponentName })}
+          confirmLabel={t('common.delete')}
           isSubmitting={deleteMatch.isPending}
           onConfirm={handleDelete}
           onCancel={() => setMatchToDelete(undefined)}

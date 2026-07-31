@@ -10,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
@@ -17,10 +18,11 @@ import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { PlayerForm, type PlayerImageChange } from '../../components/admin/PlayerForm';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlayerMutations, usePlayers } from '../../hooks/use-players';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import { ApiError } from '../../lib/api';
 import {
   removePlayerPhoto as removeStoredPlayerPhoto,
-  StorageValidationError,
   uploadPlayerPhoto,
 } from '../../services/storage.service';
 import type { Player, PlayerPayload } from '../../types/player';
@@ -33,13 +35,6 @@ interface Notification {
 type ActiveFilter = 'all' | 'active' | 'inactive';
 
 const pageSize = 10;
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError || error instanceof StorageValidationError
-    ? error.message
-    : error instanceof Error
-      ? error.message
-      : fallback;
 
 const cleanupUploadedPhoto = async (path: string | null) => {
   if (!path) {
@@ -55,6 +50,8 @@ const cleanupUploadedPhoto = async (path: string | null) => {
 };
 
 export function AdminPlayersPage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
@@ -116,7 +113,7 @@ export function AdminPlayersPage() {
     if (!imageChange.file) {
       closeForm();
       resetPage();
-      setNotification({ type: 'success', message: 'Joueur ajoute.' });
+      setNotification({ type: 'success', message: t('admin.players.created') });
       return;
     }
 
@@ -133,17 +130,12 @@ export function AdminPlayersPage() {
       });
       closeForm();
       resetPage();
-      setNotification({ type: 'success', message: 'Joueur ajoute avec photo.' });
+      setNotification({ type: 'success', message: t('admin.players.createdWithPhoto') });
     } catch (error) {
       await cleanupUploadedPhoto(uploadedPhoto?.path ?? null);
       setEditingPlayer(createdPlayer);
       resetPage();
-      setFormError(
-        getErrorMessage(
-          error,
-          'Joueur cree, mais la photo n a pas ete envoyee. Ouvre le joueur pour reessayer.',
-        ),
-      );
+      setFormError(translateApiError(error, t, 'admin.players.createdPhotoFailed'));
     }
   };
 
@@ -171,8 +163,8 @@ export function AdminPlayersPage() {
         setNotification({
           type: cleanupWarning ? 'warning' : 'success',
           message: cleanupWarning
-            ? 'Joueur modifie. Ancienne photo non supprimee automatiquement.'
-            : 'Joueur modifie.',
+            ? t('admin.players.updatedOldPhotoWarning')
+            : t('admin.players.updated'),
         });
       } catch (error) {
         await cleanupUploadedPhoto(uploadedPhoto?.path ?? null);
@@ -197,15 +189,15 @@ export function AdminPlayersPage() {
       setNotification({
         type: cleanupWarning ? 'warning' : 'success',
         message: cleanupWarning
-          ? 'Joueur modifie. Photo Storage non supprimee automatiquement.'
-          : 'Joueur modifie.',
+          ? t('admin.players.updatedStorageWarning')
+          : t('admin.players.updated'),
       });
       return;
     }
 
     await updatePlayer.mutateAsync({ playerId: player.id, payload });
     closeForm();
-    setNotification({ type: 'success', message: 'Joueur modifie.' });
+    setNotification({ type: 'success', message: t('admin.players.updated') });
   };
 
   const handleSubmit = (payload: PlayerPayload, imageChange: PlayerImageChange) => {
@@ -220,9 +212,10 @@ export function AdminPlayersPage() {
     void operation
       .catch((error: unknown) => {
         setFormError(
-          getErrorMessage(
+          translateApiError(
             error,
-            editingPlayer ? 'Impossible de modifier le joueur.' : 'Impossible d ajouter le joueur.',
+            t,
+            editingPlayer ? 'admin.players.updateFailed' : 'admin.players.createFailed',
           ),
         );
       })
@@ -240,13 +233,13 @@ export function AdminPlayersPage() {
           setDeleteConflictPlayer(undefined);
           setNotification({
             type: 'success',
-            message: active ? 'Joueur reactive.' : 'Joueur desactive.',
+            message: active ? t('admin.players.reactivated') : t('admin.players.deactivated'),
           });
         },
         onError: (error) => {
           setNotification({
             type: 'error',
-            message: getErrorMessage(error, 'Impossible de modifier le statut du joueur.'),
+            message: translateApiError(error, t, 'admin.players.statusFailed'),
           });
         },
       },
@@ -267,15 +260,15 @@ export function AdminPlayersPage() {
         setNotification({
           type: hasWarnings ? 'warning' : 'success',
           message: hasWarnings
-            ? 'Joueur supprime. Photo Storage non supprimee automatiquement.'
-            : 'Joueur supprime.',
+            ? t('admin.players.deletedStorageWarning')
+            : t('admin.players.deleted'),
         });
         setPlayerToDelete(undefined);
       },
       onError: (error) => {
         setNotification({
           type: 'error',
-          message: getErrorMessage(error, 'Impossible de supprimer ce joueur.'),
+          message: translateApiError(error, t, 'admin.players.deleteFailed'),
         });
 
         if (error instanceof ApiError && error.status === 409) {
@@ -290,9 +283,9 @@ export function AdminPlayersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Gestion des joueurs"
-        description="Effectif stocke dans Supabase. Les suppressions conservent l historique des matchs."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.players.title')}
+        description={t('admin.players.description')}
         action={
           <>
             <Link
@@ -300,7 +293,7 @@ export function AdminPlayersPage() {
               className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:border-united-red hover:text-united-red"
             >
               <ImagePlus className="h-4 w-4" aria-hidden="true" />
-              Gerer les photos
+              {t('admin.players.photos')}
             </Link>
             <button
               type="button"
@@ -308,7 +301,7 @@ export function AdminPlayersPage() {
               className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
-              Ajouter
+              {t('common.add')}
             </button>
           </>
         }
@@ -331,8 +324,7 @@ export function AdminPlayersPage() {
       {deleteConflictPlayer ? (
         <section className="panel flex flex-col gap-3 border-amber-200 bg-amber-50 p-4 text-amber-900 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold">
-            {deleteConflictPlayer.displayName} possede un historique. Desactive-le pour le masquer
-            sans supprimer ses donnees.
+            {t('admin.players.historyWarning', { player: deleteConflictPlayer.displayName })}
           </p>
           <button
             type="button"
@@ -341,7 +333,7 @@ export function AdminPlayersPage() {
             disabled={updatePlayerStatus.isPending || !deleteConflictPlayer.active}
           >
             <Power className="h-4 w-4" aria-hidden="true" />
-            Desactiver
+            {t('admin.players.deactivate')}
           </button>
         </section>
       ) : null}
@@ -350,7 +342,7 @@ export function AdminPlayersPage() {
         <PlayerForm
           key={editingPlayer?.id ?? 'create'}
           initialPlayer={editingPlayer}
-          submitLabel={editingPlayer ? 'Modifier' : 'Ajouter'}
+          submitLabel={editingPlayer ? t('common.edit') : t('common.add')}
           isSubmitting={isSubmitting}
           isUploading={isAssetProcessing}
           serverError={formError}
@@ -362,23 +354,23 @@ export function AdminPlayersPage() {
       <section className="panel p-4">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_180px]">
           <label className="space-y-1 text-sm font-bold text-zinc-700">
-            Recherche
+            {t('common.search')}
             <span className="relative block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <input
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
                   resetPage();
                 }}
-                className="focus-ring w-full rounded-md border border-zinc-300 py-2 pl-9 pr-3"
-                placeholder="Nom du joueur"
+                className="focus-ring w-full rounded-md border border-zinc-300 py-2 pe-3 ps-9"
+                placeholder={t('players.searchPlaceholder')}
               />
             </span>
           </label>
 
           <label className="space-y-1 text-sm font-bold text-zinc-700">
-            Poste exact
+            {t('players.position')}
             <input
               value={position}
               onChange={(event) => {
@@ -386,12 +378,12 @@ export function AdminPlayersPage() {
                 resetPage();
               }}
               className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
-              placeholder="Midfielder"
+              placeholder={t('players.positionPlaceholder')}
             />
           </label>
 
           <label className="space-y-1 text-sm font-bold text-zinc-700">
-            Statut
+            {t('common.status')}
             <select
               value={activeFilter}
               onChange={(event) => {
@@ -400,9 +392,9 @@ export function AdminPlayersPage() {
               }}
               className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             >
-              <option value="all">Tous</option>
-              <option value="active">Actifs</option>
-              <option value="inactive">Inactifs</option>
+              <option value="all">{t('common.all')}</option>
+              <option value="active">{t('common.active')}</option>
+              <option value="inactive">{t('common.inactive')}</option>
             </select>
           </label>
         </div>
@@ -410,26 +402,28 @@ export function AdminPlayersPage() {
 
       <section className="panel overflow-hidden">
         {playersQuery.isLoading ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Chargement des joueurs...</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">
+            {t('admin.players.loading')}
+          </div>
         ) : null}
 
         {playersQuery.isError ? (
           <div className="space-y-3 p-6">
             <p className="text-sm font-semibold text-red-700">
-              {getErrorMessage(playersQuery.error, 'Impossible de charger les joueurs.')}
+              {translateApiError(playersQuery.error, t, 'admin.players.loadError')}
             </p>
             <button
               type="button"
               onClick={() => void playersQuery.refetch()}
               className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
             >
-              Reessayer
+              {t('common.retry')}
             </button>
           </div>
         ) : null}
 
         {playersQuery.isSuccess && playersQuery.data.data.length === 0 ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">Aucun joueur trouve.</div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">{t('admin.players.empty')}</div>
         ) : null}
 
         {playersQuery.isSuccess && playersQuery.data.data.length > 0 ? (
@@ -438,12 +432,12 @@ export function AdminPlayersPage() {
               <table className="min-w-full divide-y divide-zinc-200">
                 <thead className="bg-zinc-50">
                   <tr>
-                    <th className="table-head">Joueur</th>
-                    <th className="table-head">Numero</th>
-                    <th className="table-head">Poste</th>
-                    <th className="table-head">Statut</th>
-                    <th className="table-head">Arrivee</th>
-                    <th className="table-head text-right">Actions</th>
+                    <th className="table-head">{t('players.player')}</th>
+                    <th className="table-head">{t('players.shirtNumber')}</th>
+                    <th className="table-head">{t('players.position')}</th>
+                    <th className="table-head">{t('common.status')}</th>
+                    <th className="table-head">{t('players.arrival')}</th>
+                    <th className="table-head text-end">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 bg-white">
@@ -456,9 +450,11 @@ export function AdminPlayersPage() {
                         </span>
                       </td>
                       <td className="table-cell">
-                        {player.shirtNumber ? `#${player.shirtNumber}` : '-'}
+                        {player.shirtNumber ? `#${formatNumber(player.shirtNumber)}` : '-'}
                       </td>
-                      <td className="table-cell">{player.position}</td>
+                      <td className="table-cell">
+                        {t(`positions.${player.position}`, { defaultValue: player.position })}
+                      </td>
                       <td className="table-cell">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${
@@ -467,7 +463,7 @@ export function AdminPlayersPage() {
                               : 'bg-zinc-200 text-zinc-700'
                           }`}
                         >
-                          {player.active ? 'Actif' : 'Inactif'}
+                          {player.active ? t('common.active') : t('common.inactive')}
                         </span>
                       </td>
                       <td className="table-cell">{player.joinedAt ?? '-'}</td>
@@ -477,16 +473,20 @@ export function AdminPlayersPage() {
                             type="button"
                             onClick={() => openEditForm(player)}
                             className="rounded-md border border-zinc-300 p-2 text-zinc-700 hover:bg-zinc-100"
-                            title="Modifier"
+                            title={t('common.edit')}
                           >
                             <Pencil className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">Modifier</span>
+                            <span className="sr-only">{t('common.edit')}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleStatusChange(player, !player.active)}
                             className="rounded-md border border-zinc-300 p-2 text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                            title={player.active ? 'Desactiver' : 'Reactiver'}
+                            title={
+                              player.active
+                                ? t('admin.players.deactivate')
+                                : t('admin.players.reactivate')
+                            }
                             disabled={updatePlayerStatus.isPending}
                           >
                             {player.active ? (
@@ -495,17 +495,19 @@ export function AdminPlayersPage() {
                               <RotateCcw className="h-4 w-4" aria-hidden="true" />
                             )}
                             <span className="sr-only">
-                              {player.active ? 'Desactiver' : 'Reactiver'}
+                              {player.active
+                                ? t('admin.players.deactivate')
+                                : t('admin.players.reactivate')}
                             </span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setPlayerToDelete(player)}
                             className="rounded-md border border-red-200 p-2 text-red-700 hover:bg-red-50"
-                            title="Supprimer"
+                            title={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">Supprimer</span>
+                            <span className="sr-only">{t('common.delete')}</span>
                           </button>
                         </div>
                       </td>
@@ -517,8 +519,11 @@ export function AdminPlayersPage() {
 
             <div className="flex flex-col gap-3 border-t border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                {playersQuery.data.pagination.total} joueur
-                {playersQuery.data.pagination.total > 1 ? 's' : ''} - page {page} / {totalPages}
+                {t('admin.players.pagination', {
+                  count: playersQuery.data.pagination.total,
+                  page: formatNumber(page),
+                  totalPages: formatNumber(totalPages),
+                })}
               </span>
               <div className="flex gap-2">
                 <button
@@ -528,7 +533,7 @@ export function AdminPlayersPage() {
                   disabled={page <= 1}
                 >
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  Precedent
+                  {t('common.previous')}
                 </button>
                 <button
                   type="button"
@@ -536,7 +541,7 @@ export function AdminPlayersPage() {
                   className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 font-black text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
                   disabled={page >= totalPages}
                 >
-                  Suivant
+                  {t('common.next')}
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
@@ -547,9 +552,9 @@ export function AdminPlayersPage() {
 
       {playerToDelete ? (
         <ConfirmDialog
-          title="Supprimer le joueur"
-          message={`Supprimer ${playerToDelete.displayName} ? Si ce joueur possede un historique de match, l API refusera la suppression.`}
-          confirmLabel="Supprimer"
+          title={t('admin.players.deleteTitle')}
+          message={t('admin.players.deleteMessage', { player: playerToDelete.displayName })}
+          confirmLabel={t('common.delete')}
           isSubmitting={deletePlayer.isPending}
           onConfirm={handleDelete}
           onCancel={() => setPlayerToDelete(undefined)}

@@ -45,11 +45,11 @@ describe('Footer', () => {
       'href',
       'mailto:yamen.a.ashour@gmail.com',
     );
-    expect(screen.getByRole('link', { name: 'Chaine YouTube de Yamen Ashour' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Chaîne YouTube de Yamen Ashour' })).toHaveAttribute(
       'target',
       '_blank',
     );
-    expect(screen.getAllByText(/Developpe par Ing\. Louay Tanazefti/i)).toHaveLength(2);
+    expect(screen.getAllByText(/Développé par Ing\. Louay Tanazefti/i)).toHaveLength(2);
     expect(screen.getByText(new RegExp(String(new Date().getFullYear())))).toBeInTheDocument();
   });
 });

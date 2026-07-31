@@ -8,29 +8,33 @@ import {
   type Profile,
   type SignUpResult,
 } from './AuthContext';
-import { supabase, supabaseConfigError } from '../lib/supabase';
+import i18n from '../i18n';
+import { supabase, supabaseConfigError, supabaseMissingVariables } from '../lib/supabase';
 
-const GENERIC_AUTH_ERROR = 'Une erreur d authentification est survenue. Reessaie dans un instant.';
-const PROFILE_ERROR =
-  'Impossible de charger le profil. Les droits administrateur sont desactives pour cette session.';
+const getSupabaseConfigError = () =>
+  supabaseConfigError
+    ? i18n.t('auth.errors.supabaseConfig', {
+        variables: supabaseMissingVariables.join(', '),
+      })
+    : null;
 
 const toReadableAuthError = (message?: string) => {
   if (!message) {
-    return GENERIC_AUTH_ERROR;
+    return i18n.t('auth.errors.generic');
   }
 
   const normalized = message.toLowerCase();
 
   if (normalized.includes('invalid login credentials')) {
-    return 'Email ou mot de passe incorrect.';
+    return i18n.t('auth.errors.invalidCredentials');
   }
 
   if (normalized.includes('email not confirmed')) {
-    return 'Adresse email non confirmee. Consulte ta boite mail avant de te connecter.';
+    return i18n.t('auth.errors.emailNotConfirmed');
   }
 
   if (normalized.includes('password')) {
-    return 'Le mot de passe ne respecte pas les exigences de securite.';
+    return i18n.t('auth.errors.weakPassword');
   }
 
   return message;
@@ -41,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(!supabaseConfigError);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(supabaseConfigError);
+  const [authError, setAuthError] = useState<string | null>(getSupabaseConfigError());
   const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,14 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       setProfile(null);
-      setProfileError(PROFILE_ERROR);
+      setProfileError(i18n.t('auth.errors.profileLoad'));
       setIsProfileLoading(false);
       return;
     }
 
     if (!data) {
       setProfile(null);
-      setProfileError('Aucun profil associe a cette session. Acces administrateur refuse.');
+      setProfileError(i18n.t('auth.errors.missingProfile'));
       setIsProfileLoading(false);
       return;
     }
@@ -143,14 +147,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         setProfile(null);
-        setProfileError(PROFILE_ERROR);
+        setProfileError(i18n.t('auth.errors.profileLoad'));
         setIsProfileLoading(false);
         return;
       }
 
       if (!data) {
         setProfile(null);
-        setProfileError('Aucun profil associe a cette session. Acces administrateur refuse.');
+        setProfileError(i18n.t('auth.errors.missingProfile'));
         setIsProfileLoading(false);
         return;
       }
@@ -183,8 +187,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthError(null);
 
     if (supabaseConfigError) {
-      setAuthError(supabaseConfigError);
-      return { success: false, error: supabaseConfigError };
+      const message = getSupabaseConfigError() ?? supabaseConfigError;
+      setAuthError(message);
+      return { success: false, error: message };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -215,8 +220,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(null);
 
       if (supabaseConfigError) {
-        setAuthError(supabaseConfigError);
-        return { success: false, error: supabaseConfigError };
+        const message = getSupabaseConfigError() ?? supabaseConfigError;
+        setAuthError(message);
+        return { success: false, error: message };
       }
 
       const { data, error } = await supabase.auth.signUp({

@@ -1,19 +1,14 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
-import { AccountError, requestPasswordRecovery } from '../../services/account.service';
+import { requestPasswordRecovery } from '../../services/account.service';
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const genericSuccessMessage =
-  'Si un compte correspond a cette adresse, un lien de recuperation a ete envoye.';
-
-const getErrorMessage = (error: unknown) =>
-  error instanceof AccountError || error instanceof Error
-    ? error.message
-    : 'Impossible d envoyer le lien de recuperation pour le moment.';
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -25,7 +20,7 @@ export function ForgotPasswordPage() {
     setSuccessMessage('');
 
     if (!isValidEmail(email.trim())) {
-      setFormError('Renseigne une adresse email valide.');
+      setFormError(t('auth.login.invalidEmail'));
       return;
     }
 
@@ -33,9 +28,9 @@ export function ForgotPasswordPage() {
 
     try {
       await requestPasswordRecovery(email);
-      setSuccessMessage(genericSuccessMessage);
-    } catch (error) {
-      setFormError(getErrorMessage(error));
+      setSuccessMessage(t('auth.forgotPassword.success'));
+    } catch {
+      setFormError(t('auth.forgotPassword.failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -44,13 +39,13 @@ export function ForgotPasswordPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader
-        eyebrow="Compte supporter"
-        title="Mot de passe oublie"
-        description="Demande un lien securise pour definir un nouveau mot de passe."
+        eyebrow={t('auth.accountEyebrow')}
+        title={t('auth.forgotPassword.title')}
+        description={t('auth.forgotPassword.description')}
       />
       <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Email</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.email')}</span>
           <input
             type="email"
             value={email}
@@ -76,13 +71,13 @@ export function ForgotPasswordPage() {
           disabled={isSubmitting}
           className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          {isSubmitting ? 'Envoi en cours...' : 'Envoyer le lien'}
+          {isSubmitting ? t('auth.forgotPassword.submitting') : t('auth.forgotPassword.submit')}
         </button>
         <Link
           to="/login"
           className="inline-flex text-sm font-black text-united-red hover:text-red-800"
         >
-          Retour a la connexion
+          {t('auth.forgotPassword.backToLogin')}
         </Link>
       </form>
     </div>

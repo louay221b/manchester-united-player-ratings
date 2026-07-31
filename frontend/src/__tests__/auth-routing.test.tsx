@@ -84,7 +84,7 @@ describe('protected routing', () => {
 
     renderRoutes('/admin', <AdminRoute />);
 
-    expect(screen.getByText('Acces refuse')).toBeInTheDocument();
+    expect(screen.getByText(/réservé aux administrateurs/i)).toBeInTheDocument();
     expect(screen.queryByText('Contenu admin')).not.toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe('public navigation', () => {
     expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Connexion' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profil' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Deconnexion' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Déconnexion' })).toBeInTheDocument();
   });
 
   it('shows Admin only for admin users', () => {
@@ -189,7 +189,7 @@ describe('public navigation', () => {
 
     expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profil' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Deconnexion' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Déconnexion' })).toBeInTheDocument();
   });
 
   it('refreshes the displayed navigation name from the profile state', () => {

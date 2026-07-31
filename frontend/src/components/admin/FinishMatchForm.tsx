@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FinishMatchPayload, Match } from '../../types/match';
 
@@ -18,6 +19,7 @@ export function FinishMatchForm({
   onSubmit,
   onCancel,
 }: FinishMatchFormProps) {
+  const { t } = useTranslation();
   const [manchesterUnitedScore, setManchesterUnitedScore] = useState('');
   const [opponentScore, setOpponentScore] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function FinishMatchForm({
       unitedScore < 0 ||
       rivalScore < 0
     ) {
-      setError('Les scores doivent etre des entiers positifs ou nuls.');
+      setError(t('admin.matches.scoreValidation'));
       return;
     }
 
@@ -48,10 +50,8 @@ export function FinishMatchForm({
   return (
     <form onSubmit={handleSubmit} className="panel space-y-4 border-amber-200 bg-amber-50 p-5">
       <div>
-        <h2 className="text-xl font-black text-zinc-950">Terminer le match</h2>
-        <p className="mt-1 text-sm font-semibold text-amber-800">
-          En terminant ce match, les votes seront ouverts automatiquement.
-        </p>
+        <h2 className="text-xl font-black text-zinc-950">{t('admin.matches.finishTitle')}</h2>
+        <p className="mt-1 text-sm font-semibold text-amber-800">{t('admin.matches.finishHelp')}</p>
         <p className="mt-1 text-sm text-zinc-600">Manchester United vs {match.opponentName}</p>
       </div>
 
@@ -94,14 +94,14 @@ export function FinishMatchForm({
           className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           disabled={isSubmitting}
         >
-          Annuler
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Finalisation...' : 'Terminer et ouvrir les votes'}
+          {isSubmitting ? t('admin.matches.finishing') : t('admin.matches.finishSubmit')}
         </button>
       </div>
     </form>

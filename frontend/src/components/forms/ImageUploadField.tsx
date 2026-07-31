@@ -1,6 +1,9 @@
 import { ImagePlus, Trash2, UploadCloud, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import { StorageValidationError, validateImageFile } from '../../services/storage.service';
 
 interface ImageUploadFieldProps {
@@ -18,14 +21,6 @@ interface ImageUploadFieldProps {
   onRemoveChange: (remove: boolean) => void;
 }
 
-const formatFileSize = (size: number) => {
-  if (size < 1024 * 1024) {
-    return `${Math.max(1, Math.round(size / 1024))} Ko`;
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} Mo`;
-};
-
 export function ImageUploadField({
   label,
   currentImageUrl,
@@ -40,6 +35,8 @@ export function ImageUploadField({
   onFileChange,
   onRemoveChange,
 }: ImageUploadFieldProps) {
+  const { t } = useTranslation();
+  const { formatFileSize } = useFormatters();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
@@ -88,8 +85,8 @@ export function ImageUploadField({
       resetInput();
       setClientError(
         validationError instanceof StorageValidationError
-          ? validationError.message
-          : 'Image invalide.',
+          ? translateApiError(validationError, t, 'common.invalidImage')
+          : t('common.invalidImage'),
       );
     }
   };
@@ -131,7 +128,7 @@ export function ImageUploadField({
           <div>
             <p className="text-sm font-black text-zinc-800">{label}</p>
             <p className="mt-1 text-xs font-semibold text-zinc-500">
-              JPEG, PNG ou WebP. Taille maximale 5 Mo.
+              {t('imageUpload.requirements')}
             </p>
           </div>
 
@@ -146,7 +143,9 @@ export function ImageUploadField({
 
           {isUploading ? (
             <div className="space-y-2" role="status" aria-live="polite">
-              <p className="text-xs font-black uppercase text-united-red">Upload en cours</p>
+              <p className="text-xs font-black uppercase text-united-red">
+                {t('imageUpload.inProgress')}
+              </p>
               <div className="h-2 overflow-hidden rounded-full bg-red-100">
                 <div className="h-full w-2/3 animate-pulse rounded-full bg-united-red" />
               </div>
@@ -154,9 +153,7 @@ export function ImageUploadField({
           ) : null}
 
           {removeRequested ? (
-            <p className="text-sm font-semibold text-amber-700">
-              L image sera retiree apres enregistrement.
-            </p>
+            <p className="text-sm font-semibold text-amber-700">{t('imageUpload.willRemove')}</p>
           ) : null}
 
           {clientError || error ? (
@@ -171,7 +168,7 @@ export function ImageUploadField({
               accept="image/jpeg,image/png,image/webp"
               className="sr-only"
               disabled={disabled || isUploading}
-              aria-label={`Selectionner ${label}`}
+              aria-label={t('imageUpload.selectAria', { label })}
               onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)}
             />
             <button
@@ -181,7 +178,7 @@ export function ImageUploadField({
               disabled={disabled || isUploading}
             >
               <UploadCloud className="h-4 w-4" aria-hidden="true" />
-              {currentImageUrl || selectedFile ? 'Remplacer' : 'Ajouter'}
+              {currentImageUrl || selectedFile ? t('imageUpload.replace') : t('imageUpload.add')}
             </button>
 
             {selectedFile ? (
@@ -192,7 +189,7 @@ export function ImageUploadField({
                 disabled={disabled || isUploading}
               >
                 <X className="h-4 w-4" aria-hidden="true" />
-                Annuler fichier
+                {t('imageUpload.cancelFile')}
               </button>
             ) : null}
 
@@ -204,7 +201,7 @@ export function ImageUploadField({
                 disabled={disabled || isUploading}
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
-                Supprimer
+                {t('common.delete')}
               </button>
             ) : null}
           </div>

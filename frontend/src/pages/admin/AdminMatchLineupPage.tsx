@@ -1,5 +1,6 @@
 import { Save, Trash2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
@@ -7,7 +8,8 @@ import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { useMatchLineup, useMatchLineupMutations } from '../../hooks/use-match-lineup';
 import { usePlayers } from '../../hooks/use-players';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import type { LineupPlayerPayload, ParticipationStatus } from '../../types/match';
 import type { Player } from '../../types/player';
 import { isUuid } from '../../utils/uuid';
@@ -26,25 +28,15 @@ interface Notification {
   message: string;
 }
 
-const participationLabels: Record<ParticipationStatus, string> = {
-  starter: 'Titulaire',
-  substitute_entered: 'Remplacant entre',
-  substitute_unused: 'Remplacant non utilise',
-};
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
+const participationStatuses: ParticipationStatus[] = [
+  'starter',
+  'substitute_entered',
+  'substitute_unused',
+];
 
 const toMinuteString = (value: number | null) => (value === null ? '' : String(value));
 
 const toNullableMinute = (value: string) => (value.trim() === '' ? null : Number(value));
-
-const invalidMatchMessage = 'Sélectionnez d’abord un match.';
-
-const formatPlayerOption = (player: Player) =>
-  [player.displayName, player.shirtNumber ? `#${player.shirtNumber}` : null, player.position]
-    .filter(Boolean)
-    .join(' — ');
 
 const getDefaultRow = (playerId: string): LineupFormRow => ({
   playerId,
@@ -115,6 +107,8 @@ const withCalculatedMinutes = (
 };
 
 export function AdminMatchLineupPage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const hasValidMatchId = isUuid(matchId);
@@ -131,10 +125,10 @@ export function AdminMatchLineupPage() {
     if (!hasValidMatchId) {
       navigate('/admin/matches', {
         replace: true,
-        state: { message: invalidMatchMessage },
+        state: { message: t('admin.lineup.invalidMatch') },
       });
     }
-  }, [hasValidMatchId, navigate]);
+  }, [hasValidMatchId, navigate, t]);
 
   useEffect(() => {
     if (!lineupQuery.data) {
@@ -176,6 +170,15 @@ export function AdminMatchLineupPage() {
   );
   const isLocked = lineupQuery.data?.match.votingStatus === 'completed';
 
+  const formatPlayerOption = (player: Player) =>
+    [
+      player.displayName,
+      player.shirtNumber ? `#${formatNumber(player.shirtNumber)}` : null,
+      t(`positions.${player.position}`, { defaultValue: player.position }),
+    ]
+      .filter(Boolean)
+      .join(' - ');
+
   const updateRow = (playerId: string, updater: (row: LineupFormRow) => LineupFormRow) => {
     setRows((current) => current.map((row) => (row.playerId === playerId ? updater(row) : row)));
   };
@@ -186,7 +189,7 @@ export function AdminMatchLineupPage() {
     }
 
     if (rows.some((row) => row.playerId === selectedPlayerId)) {
-      setValidationError('Ce joueur est deja dans la composition.');
+      setValidationError(t('admin.lineup.duplicatePlayer'));
       return;
     }
 
@@ -201,13 +204,13 @@ export function AdminMatchLineupPage() {
 
   const validateRows = () => {
     if (rows.length === 0) {
-      return 'Ajoute au moins un joueur.';
+      return t('admin.lineup.needPlayer');
     }
 
     const uniquePlayers = new Set(rows.map((row) => row.playerId));
 
     if (uniquePlayers.size !== rows.length) {
-      return 'Un joueur ne peut apparaitre qu une fois.';
+      return t('admin.lineup.duplicateValidation');
     }
 
     const invalidRow = rows.find((row) => {
@@ -230,9 +233,7 @@ export function AdminMatchLineupPage() {
       );
     });
 
-    return invalidRow
-      ? 'Corrige les minutes, le statut ou l eligibilite avant d enregistrer.'
-      : null;
+    return invalidRow ? t('admin.lineup.invalidRows') : null;
   };
 
   const toPayload = (): LineupPlayerPayload[] =>
@@ -262,12 +263,12 @@ export function AdminMatchLineupPage() {
       { matchId: safeMatchId, payload: { players: toPayload() } },
       {
         onSuccess: () => {
-          setNotification({ type: 'success', message: 'Composition enregistree.' });
+          setNotification({ type: 'success', message: t('admin.lineup.saved') });
         },
         onError: (mutationError) => {
           setNotification({
             type: 'error',
-            message: getErrorMessage(mutationError, 'Impossible d enregistrer la composition.'),
+            message: translateApiError(mutationError, t, 'admin.lineup.saveFailed'),
           });
         },
       },
@@ -277,31 +278,33 @@ export function AdminMatchLineupPage() {
   if (!hasValidMatchId) {
     return (
       <PageHeader
-        eyebrow="Composition"
-        title={invalidMatchMessage}
-        description="Retour vers la liste des matchs."
+        eyebrow={t('admin.lineup.title')}
+        title={t('admin.lineup.invalidMatch')}
+        description={t('admin.lineup.backDescription')}
       />
     );
   }
 
   if (lineupQuery.isLoading) {
-    return <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement...</div>;
+    return (
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('common.loading')}</div>
+    );
   }
 
   if (lineupQuery.isError) {
     return (
       <div className="space-y-4">
         <PageHeader
-          eyebrow="Composition"
-          title="Composition introuvable"
-          description={getErrorMessage(lineupQuery.error, 'Impossible de charger la composition.')}
+          eyebrow={t('admin.lineup.title')}
+          title={t('admin.lineup.notFound')}
+          description={translateApiError(lineupQuery.error, t, 'admin.lineup.loadError')}
         />
         <button
           type="button"
           onClick={() => void lineupQuery.refetch()}
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
         >
-          Reessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -318,9 +321,9 @@ export function AdminMatchLineupPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Composition"
+        eyebrow={t('admin.lineup.title')}
         title={`Manchester United vs ${match.opponentName}`}
-        description="Titulaires, remplacants entres, remplacants non utilises et eligibilite au vote."
+        description={t('admin.lineup.description')}
         action={
           <>
             <OpponentLogo
@@ -332,7 +335,7 @@ export function AdminMatchLineupPage() {
               to="/admin/matches"
               className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
             >
-              Retour aux matchs
+              {t('admin.lineup.backToMatches')}
             </Link>
           </>
         }
@@ -340,7 +343,7 @@ export function AdminMatchLineupPage() {
 
       {isLocked ? (
         <div className="panel border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-          Les votes sont termines. La composition ne peut plus etre modifiee.
+          {t('admin.lineup.locked')}
         </div>
       ) : null}
 
@@ -359,14 +362,14 @@ export function AdminMatchLineupPage() {
       <section className="panel p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end">
           <label className="flex-1 space-y-1 text-sm font-bold text-zinc-700">
-            Ajouter un joueur actif
+            {t('admin.lineup.addActivePlayer')}
             <select
               value={selectedPlayerId}
               onChange={(event) => setSelectedPlayerId(event.target.value)}
               className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
               disabled={isLocked || playersQuery.isLoading}
             >
-              <option value="">Selectionner</option>
+              <option value="">{t('common.select')}</option>
               {availablePlayers.map((player) => (
                 <option key={player.id} value={player.id}>
                   {formatPlayerOption(player)}
@@ -381,28 +384,26 @@ export function AdminMatchLineupPage() {
             disabled={isLocked || !selectedPlayerId}
           >
             <UserPlus className="h-4 w-4" aria-hidden="true" />
-            Ajouter
+            {t('common.add')}
           </button>
         </div>
       </section>
 
       <section className="panel overflow-hidden">
         {rows.length === 0 ? (
-          <div className="p-6 text-sm font-semibold text-zinc-600">
-            Aucun joueur dans la composition.
-          </div>
+          <div className="p-6 text-sm font-semibold text-zinc-600">{t('admin.lineup.empty')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-zinc-200">
               <thead className="bg-zinc-50">
                 <tr>
-                  <th className="table-head">Joueur</th>
-                  <th className="table-head">Statut</th>
-                  <th className="table-head">Entree</th>
-                  <th className="table-head">Sortie</th>
-                  <th className="table-head">Minutes</th>
-                  <th className="table-head">Eligible</th>
-                  <th className="table-head text-right">Actions</th>
+                  <th className="table-head">{t('players.player')}</th>
+                  <th className="table-head">{t('common.status')}</th>
+                  <th className="table-head">{t('admin.lineup.entry')}</th>
+                  <th className="table-head">{t('admin.lineup.exit')}</th>
+                  <th className="table-head">{t('admin.lineup.minutes')}</th>
+                  <th className="table-head">{t('admin.lineup.eligible')}</th>
+                  <th className="table-head text-end">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 bg-white">
@@ -418,7 +419,7 @@ export function AdminMatchLineupPage() {
                       <td className="table-cell">
                         <span className="flex items-center gap-3 font-black text-zinc-950">
                           {apiPlayer ? <ApiPlayerAvatar player={apiPlayer} size="sm" /> : null}
-                          {player?.displayName ?? 'Joueur'}
+                          {player?.displayName ?? t('players.player')}
                         </span>
                       </td>
                       <td className="table-cell">
@@ -435,9 +436,9 @@ export function AdminMatchLineupPage() {
                           className="focus-ring min-w-44 rounded-md border border-zinc-300 px-3 py-2"
                           disabled={isLocked}
                         >
-                          {Object.entries(participationLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
+                          {participationStatuses.map((status) => (
+                            <option key={status} value={status}>
+                              {t(`statuses.participation.${status}`)}
                             </option>
                           ))}
                         </select>
@@ -522,7 +523,7 @@ export function AdminMatchLineupPage() {
                             disabled={isLocked}
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
-                            <span className="sr-only">Retirer</span>
+                            <span className="sr-only">{t('admin.lineup.remove')}</span>
                           </button>
                         </div>
                       </td>
@@ -543,7 +544,7 @@ export function AdminMatchLineupPage() {
           disabled={isLocked || replaceMatchLineup.isPending}
         >
           <Save className="h-4 w-4" aria-hidden="true" />
-          {replaceMatchLineup.isPending ? 'Enregistrement...' : 'Enregistrer la composition'}
+          {replaceMatchLineup.isPending ? t('common.saving') : t('admin.lineup.save')}
         </button>
       </div>
     </div>

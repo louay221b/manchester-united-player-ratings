@@ -1,12 +1,8 @@
+import { useTranslation } from 'react-i18next';
+
 import type { VotingStatus } from '../types/match';
 
 type BadgeVoteStatus = VotingStatus;
-
-const labels: Record<BadgeVoteStatus, string> = {
-  open: 'Votes ouverts',
-  closed: 'Votes fermes',
-  completed: 'Votes termines',
-};
 
 const styles: Record<BadgeVoteStatus, string> = {
   open: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -15,11 +11,13 @@ const styles: Record<BadgeVoteStatus, string> = {
 };
 
 export function VoteStatusBadge({ status }: { status: BadgeVoteStatus }) {
+  const { t } = useTranslation();
+
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${styles[status]}`}
     >
-      {labels[status]}
+      {t(`statuses.voting.${status}`)}
     </span>
   );
 }

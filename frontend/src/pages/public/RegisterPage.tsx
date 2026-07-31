@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
@@ -7,6 +8,7 @@ import { useAuth } from '../../contexts/useAuth';
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const { authError, signUp } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
@@ -24,22 +26,22 @@ export function RegisterPage() {
     setConfirmationMessage('');
 
     if (!fullName.trim()) {
-      setFormError('Renseigne ton nom complet.');
+      setFormError(t('auth.register.missingFullName'));
       return;
     }
 
     if (!isValidEmail(email.trim())) {
-      setFormError('Renseigne une adresse email valide.');
+      setFormError(t('auth.register.invalidEmail'));
       return;
     }
 
     if (password.length < 8) {
-      setFormError('Le mot de passe doit contenir au moins 8 caracteres.');
+      setFormError(t('auth.register.shortPassword'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('La confirmation du mot de passe ne correspond pas.');
+      setFormError(t('auth.register.passwordMismatch'));
       return;
     }
 
@@ -48,14 +50,12 @@ export function RegisterPage() {
     setIsSubmitting(false);
 
     if (!result.success) {
-      setFormError(result.error ?? 'Inscription impossible pour le moment.');
+      setFormError(result.error ?? t('auth.register.failed'));
       return;
     }
 
     if (result.needsEmailConfirmation) {
-      setConfirmationMessage(
-        'Inscription recue. Consulte ton email pour confirmer ton compte avant de te connecter.',
-      );
+      setConfirmationMessage(t('auth.register.confirmation'));
       setPassword('');
       setConfirmPassword('');
       return;
@@ -67,13 +67,13 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader
-        eyebrow="Compte supporter"
-        title="Inscription"
-        description="Cree ton compte Supabase. Le profil recevra automatiquement le role user."
+        eyebrow={t('auth.accountEyebrow')}
+        title={t('auth.register.title')}
+        description={t('auth.register.description')}
       />
       <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Nom complet</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.fullName')}</span>
           <input
             type="text"
             value={fullName}
@@ -84,7 +84,7 @@ export function RegisterPage() {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Email</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.email')}</span>
           <input
             type="email"
             value={email}
@@ -95,7 +95,7 @@ export function RegisterPage() {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Mot de passe</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.password')}</span>
           <input
             type="password"
             value={password}
@@ -106,7 +106,7 @@ export function RegisterPage() {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Confirmation du mot de passe</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.confirmPassword')}</span>
           <input
             type="password"
             value={confirmPassword}
@@ -131,12 +131,12 @@ export function RegisterPage() {
           disabled={isSubmitting}
           className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          {isSubmitting ? 'Inscription en cours...' : 'Creer le compte'}
+          {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
         </button>
         <p className="text-sm text-zinc-600">
-          Deja inscrit ?{' '}
+          {t('auth.register.hasAccount')}{' '}
           <Link to="/login" className="font-black text-united-red hover:text-red-800">
-            Se connecter
+            {t('auth.register.signIn')}
           </Link>
         </p>
       </form>

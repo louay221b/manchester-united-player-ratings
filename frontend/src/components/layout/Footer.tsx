@@ -1,29 +1,31 @@
 import { Mail } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const externalLinks = [
   {
     href: 'https://www.youtube.com/@yamenashour',
-    label: 'Chaine YouTube de Yamen Ashour',
+    labelKey: 'footer.youtubeYamen',
   },
   {
     href: 'https://www.youtube.com/@halawaney',
-    label: 'Chaine YouTube Halawaney',
+    labelKey: 'footer.youtubeHalawaney',
   },
   {
     href: 'https://www.facebook.com/yamen.ashour',
-    label: 'Facebook',
+    labelKey: 'footer.facebook',
   },
   {
     href: 'https://twitter.com/Yamen_Ashour',
-    label: 'X / Twitter',
+    labelKey: 'footer.twitter',
   },
   {
     href: 'https://www.paypal.com/paypalme/yamenashour',
-    label: 'Soutenir le projet',
+    labelKey: 'footer.support',
   },
 ];
 
 export function Footer() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -34,7 +36,7 @@ export function Footer() {
             id="footer-contact"
             className="text-sm font-black uppercase tracking-[0.14em] text-red-200"
           >
-            Contact
+            {t('footer.contact')}
           </h2>
           <a
             href="mailto:yamen.a.ashour@gmail.com"
@@ -50,7 +52,7 @@ export function Footer() {
             id="footer-links"
             className="text-sm font-black uppercase tracking-[0.14em] text-red-200"
           >
-            Liens
+            {t('footer.socialLinks')}
           </h2>
           <ul className="space-y-2 text-sm font-semibold">
             {externalLinks.map((link) => (
@@ -61,7 +63,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="focus-ring rounded-md text-zinc-200 hover:text-white"
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </a>
               </li>
             ))}
@@ -73,9 +75,11 @@ export function Footer() {
             id="footer-development"
             className="text-sm font-black uppercase tracking-[0.14em] text-red-200"
           >
-            Developpement
+            {t('footer.developedBy')}
           </h2>
-          <p className="text-sm font-semibold text-zinc-200">Developpe par Ing. Louay Tanazefti</p>
+          <p className="text-sm font-semibold text-zinc-200">
+            {t('footer.developedBy')} Ing. Louay Tanazefti
+          </p>
           <a
             href="mailto:tanazeftilouay@gmail.com"
             className="focus-ring inline-flex rounded-md text-sm font-semibold text-zinc-200 hover:text-white"
@@ -85,12 +89,8 @@ export function Footer() {
         </section>
       </div>
       <div className="border-t border-zinc-800 px-4 py-4 text-center text-xs font-semibold text-zinc-400">
-        <p>
-          &copy; {currentYear} Manchester United Player Ratings. Developpe par Ing. Louay Tanazefti.
-        </p>
-        <p className="mt-1">
-          Projet independant non affilie officiellement a Manchester United FC.
-        </p>
+        <p>{t('footer.copyright', { year: currentYear })}</p>
+        <p className="mt-1">{t('footer.independentDisclaimer')}</p>
       </div>
     </footer>
   );

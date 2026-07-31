@@ -1,5 +1,6 @@
 import { CheckCircle2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { OpponentLogo } from '../../components/OpponentLogo';
@@ -8,29 +9,12 @@ import { ManOfTheMatchSelector } from '../../components/voting/ManOfTheMatchSele
 import { PlayerRatingCard } from '../../components/voting/PlayerRatingCard';
 import { VotingProgress } from '../../components/voting/VotingProgress';
 import { useVotingBallot, useVotingBallotMutations } from '../../hooks/use-voting-ballot';
-import { ApiError } from '../../lib/api';
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
-
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-
-const formatScore = (unitedScore: number | null, opponentScore: number | null) => {
-  if (unitedScore === null || opponentScore === null) {
-    return 'Score indisponible';
-  }
-
-  return `${unitedScore}-${opponentScore}`;
-};
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 
 export function PlayerVotePage() {
+  const { t } = useTranslation();
+  const { formatDate, formatNumber, formatScore } = useFormatters();
   const { matchId } = useParams();
   const ballotQuery = useVotingBallot(matchId ?? '');
   const { submitBallot } = useVotingBallotMutations();
@@ -60,16 +44,16 @@ export function PlayerVotePage() {
   if (!matchId) {
     return (
       <PageHeader
-        eyebrow="Vote"
-        title="Match introuvable"
-        description="Aucun identifiant de match n a ete fourni."
+        eyebrow={t('voting.supporterVote')}
+        title={t('matches.notFound')}
+        description={t('matches.missingId')}
       />
     );
   }
 
   if (ballotQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du vote...</div>
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('voting.loading')}</div>
     );
   }
 
@@ -77,12 +61,9 @@ export function PlayerVotePage() {
     return (
       <div className="space-y-4">
         <PageHeader
-          eyebrow="Vote"
-          title="Vote indisponible"
-          description={getErrorMessage(
-            ballotQuery.error,
-            'Ce match n est pas ouvert au vote ou ta session a expire.',
-          )}
+          eyebrow={t('voting.supporterVote')}
+          title={t('voting.unavailable')}
+          description={translateApiError(ballotQuery.error, t, 'voting.unavailableDescription')}
         />
         <div className="flex flex-wrap gap-2">
           <button
@@ -90,13 +71,13 @@ export function PlayerVotePage() {
             onClick={() => void ballotQuery.refetch()}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           >
-            Reessayer
+            {t('common.retry')}
           </button>
           <Link
             to="/"
             className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
-            Retour accueil
+            {t('voting.backHome')}
           </Link>
         </div>
       </div>
@@ -138,10 +119,10 @@ export function PlayerVotePage() {
       },
       {
         onSuccess: () => {
-          setSuccessMessage('Vote enregistre avec succes.');
+          setSuccessMessage(t('voting.success'));
         },
         onError: (error) => {
-          setSubmitError(getErrorMessage(error, 'Impossible d enregistrer ton vote.'));
+          setSubmitError(translateApiError(error, t, 'voting.submitError'));
         },
       },
     );
@@ -150,11 +131,18 @@ export function PlayerVotePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Vote supporters"
+        eyebrow={t('voting.supporterVote')}
         title={`Manchester United vs ${ballot.match.opponentName}`}
-        description={`${ballot.match.competition} - ${formatDate(ballot.match.matchDate)} - ${formatScore(
+        description={`${ballot.match.competition} - ${formatDate(ballot.match.matchDate, {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })} - ${formatScore(
           ballot.match.manchesterUnitedScore,
           ballot.match.opponentScore,
+          t('matches.resultUnavailable'),
         )}`}
         action={
           <OpponentLogo
@@ -167,11 +155,11 @@ export function PlayerVotePage() {
 
       {isVotingClosed ? (
         <div className="panel border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-          Les votes sont maintenant clotures.
+          {t('voting.closedNotice')}
         </div>
       ) : (
         <div className="panel border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-          Vous pouvez modifier votre vote jusqu a la cloture.
+          {t('voting.openNotice')}
         </div>
       )}
 
@@ -195,7 +183,7 @@ export function PlayerVotePage() {
 
       {ballot.players.length === 0 ? (
         <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Aucun joueur eligible au vote pour ce match.
+          {t('voting.noEligiblePlayers')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -226,7 +214,10 @@ export function PlayerVotePage() {
       {!isVotingClosed ? (
         <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-subtle sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-zinc-600">
-            {ratedCount}/{ballot.players.length} joueurs notes
+            {t('voting.progressPlayers', {
+              rated: formatNumber(ratedCount),
+              total: formatNumber(ballot.players.length),
+            })}
           </p>
           <button
             type="button"
@@ -236,10 +227,10 @@ export function PlayerVotePage() {
           >
             <CheckCircle2 size={18} aria-hidden="true" />
             {submitBallot.isPending
-              ? 'Enregistrement...'
+              ? t('voting.saving')
               : hasExistingBallot
-                ? 'Mettre a jour mon vote'
-                : 'Envoyer mon vote'}
+                ? t('voting.update')
+                : t('voting.submit')}
           </button>
         </div>
       ) : null}
@@ -248,7 +239,7 @@ export function PlayerVotePage() {
         to={`/matches/${ballot.match.id}`}
         className="text-sm font-black text-united-red hover:text-red-800"
       >
-        Retour au match
+        {t('voting.backToMatch')}
       </Link>
     </div>
   );

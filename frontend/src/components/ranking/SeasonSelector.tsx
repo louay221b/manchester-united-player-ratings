@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import type { Season } from '../../types/season';
 
 interface SeasonSelectorProps {
@@ -13,19 +15,23 @@ export function SeasonSelector({
   onChange,
   isLoading = false,
 }: SeasonSelectorProps) {
+  const { t } = useTranslation();
+
   return (
     <label className="panel flex flex-col gap-2 p-4 sm:max-w-xs">
-      <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Saison</span>
+      <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+        {t('common.season')}
+      </span>
       <select
         value={selectedSeasonId}
         onChange={(event) => onChange(event.target.value)}
         disabled={isLoading || seasons.length === 0}
         className="focus-ring rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:bg-zinc-100"
       >
-        {seasons.length === 0 ? <option value="">Aucune saison</option> : null}
+        {seasons.length === 0 ? <option value="">{t('common.noneAvailable')}</option> : null}
         {seasons.map((season) => (
           <option key={season.id} value={season.id}>
-            {season.name} {season.status === 'active' ? '(active)' : ''}
+            {season.name} {season.status === 'active' ? `(${t('common.active')})` : ''}
           </option>
         ))}
       </select>

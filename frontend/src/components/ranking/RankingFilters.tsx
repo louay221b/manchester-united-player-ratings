@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import type { RankingFilters as RankingFiltersState } from '../../types/ranking';
 
 interface RankingFiltersProps {
@@ -17,6 +19,8 @@ export function RankingFilters({
   publishedOnly,
   onPublishedOnlyChange,
 }: RankingFiltersProps) {
+  const { t } = useTranslation();
+
   const updateFilter = (nextFilters: Partial<RankingFiltersState>) => {
     onChange({
       ...filters,
@@ -27,27 +31,31 @@ export function RankingFilters({
   return (
     <section className="panel grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
       <label className="space-y-2">
-        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Joueur</span>
+        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+          {t('ranking.filters.player')}
+        </span>
         <input
           type="search"
           value={filters.search ?? ''}
           onChange={(event) => updateFilter({ search: event.target.value })}
-          placeholder="Rechercher un joueur"
+          placeholder={t('ranking.filters.searchPlayer')}
           className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
         />
       </label>
 
       <label className="space-y-2">
-        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Poste</span>
+        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+          {t('ranking.filters.position')}
+        </span>
         <select
           value={filters.position ?? ''}
           onChange={(event) => updateFilter({ position: event.target.value || undefined })}
           className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
         >
-          <option value="">Tous les postes</option>
+          <option value="">{t('ranking.filters.allPositions')}</option>
           {positions.map((position) => (
             <option key={position} value={position}>
-              {position}
+              {t(`positions.${position}`, { defaultValue: position })}
             </option>
           ))}
         </select>
@@ -55,7 +63,9 @@ export function RankingFilters({
 
       {showActiveFilter ? (
         <label className="space-y-2">
-          <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Statut</span>
+          <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+            {t('ranking.filters.status')}
+          </span>
           <select
             value={filters.active === undefined ? 'all' : String(filters.active)}
             onChange={(event) => {
@@ -66,15 +76,17 @@ export function RankingFilters({
             }}
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
           >
-            <option value="all">Tous les joueurs</option>
-            <option value="true">Actifs</option>
-            <option value="false">Inactifs</option>
+            <option value="all">{t('ranking.filters.allPlayers')}</option>
+            <option value="true">{t('ranking.filters.activePlayers')}</option>
+            <option value="false">{t('ranking.filters.inactivePlayers')}</option>
           </select>
         </label>
       ) : null}
 
       <label className="space-y-2">
-        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">Minimum MJ</span>
+        <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+          {t('ranking.filters.minimumPlayed')}
+        </span>
         <input
           type="number"
           min={0}
@@ -98,7 +110,9 @@ export function RankingFilters({
             onChange={(event) => onPublishedOnlyChange(event.target.checked)}
             className="h-4 w-4 accent-united-red"
           />
-          <span className="text-sm font-bold text-zinc-700">Resultats publies uniquement</span>
+          <span className="text-sm font-bold text-zinc-700">
+            {t('ranking.filters.publishedOnly')}
+          </span>
         </label>
       ) : null}
     </section>

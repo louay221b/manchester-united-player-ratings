@@ -1,4 +1,5 @@
 import { BarChart3, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
@@ -6,45 +7,30 @@ import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useMatch } from '../../hooks/use-matches';
-import { ApiError } from '../../lib/api';
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
-
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-
-const formatScore = (unitedScore: number | null, opponentScore: number | null) => {
-  if (unitedScore === null || opponentScore === null) {
-    return 'A venir';
-  }
-
-  return `${unitedScore}-${opponentScore}`;
-};
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 
 export function MatchDetailsPage() {
+  const { t } = useTranslation();
+  const { formatDate, formatNumber, formatScore } = useFormatters();
   const { matchId } = useParams();
   const matchQuery = useMatch(matchId ?? '');
 
   if (!matchId) {
     return (
       <PageHeader
-        eyebrow="Erreur"
-        title="Match introuvable"
-        description="Aucun identifiant de match n a ete fourni."
+        eyebrow={t('errors.NOT_FOUND')}
+        title={t('matches.notFound')}
+        description={t('matches.missingId')}
       />
     );
   }
 
   if (matchQuery.isLoading) {
     return (
-      <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement du match...</div>
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">
+        {t('matches.detailsLoading')}
+      </div>
     );
   }
 
@@ -52,16 +38,16 @@ export function MatchDetailsPage() {
     return (
       <div className="space-y-4">
         <PageHeader
-          eyebrow="Erreur"
-          title="Match introuvable"
-          description={getErrorMessage(matchQuery.error, 'Impossible de charger ce match.')}
+          eyebrow={t('errors.NOT_FOUND')}
+          title={t('matches.notFound')}
+          description={translateApiError(matchQuery.error, t, 'matches.detailsLoadError')}
         />
         <button
           type="button"
           onClick={() => void matchQuery.refetch()}
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
         >
-          Reessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -82,7 +68,13 @@ export function MatchDetailsPage() {
       <PageHeader
         eyebrow={match.competition}
         title={`Manchester United vs ${match.opponentName}`}
-        description={`${formatDate(match.matchDate)} - ${match.venue ?? 'Lieu a confirmer'}`}
+        description={`${formatDate(match.matchDate, {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })} - ${match.venue ?? t('matches.venueTbc')}`}
         action={
           <>
             <OpponentLogo
@@ -96,7 +88,7 @@ export function MatchDetailsPage() {
                 className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
               >
                 <Star size={18} aria-hidden="true" />
-                Voter
+                {t('common.vote')}
               </Link>
             ) : null}
             {match.resultsPublished ? (
@@ -105,7 +97,7 @@ export function MatchDetailsPage() {
                 className="inline-flex items-center gap-2 rounded-md bg-zinc-950 px-4 py-2 text-sm font-black text-white hover:bg-zinc-800"
               >
                 <BarChart3 size={18} aria-hidden="true" />
-                Resultats
+                {t('common.results')}
               </Link>
             ) : null}
           </>
@@ -114,30 +106,30 @@ export function MatchDetailsPage() {
 
       <section className="grid gap-4 md:grid-cols-4">
         <article className="panel p-5 md:col-span-2">
-          <p className="text-sm font-semibold text-zinc-500">Score</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('common.score')}</p>
           <p className="mt-2 text-4xl font-black text-zinc-950">
-            {formatScore(match.manchesterUnitedScore, match.opponentScore)}
+            {formatScore(match.manchesterUnitedScore, match.opponentScore, t('common.upcoming'))}
           </p>
         </article>
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Statut votes</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('matches.voteStatus')}</p>
           <div className="mt-3">
             <VoteStatusBadge status={match.votingStatus} />
           </div>
         </article>
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Lieu</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('matches.venue')}</p>
           <p className="mt-2 text-lg font-black text-zinc-950">
-            {match.isHome ? 'Domicile' : 'Exterieur'}
+            {match.isHome ? t('matches.home') : t('matches.away')}
           </p>
         </article>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-black text-zinc-950">Joueurs participants</h2>
+        <h2 className="text-xl font-black text-zinc-950">{t('matches.participants')}</h2>
         {participants.length === 0 ? (
           <div className="panel p-5 text-sm font-semibold text-zinc-600">
-            La composition participante n est pas encore definie.
+            {t('matches.noParticipants')}
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -147,7 +139,10 @@ export function MatchDetailsPage() {
                 <div>
                   <p className="font-black text-zinc-950">{lineupPlayer.player.displayName}</p>
                   <p className="text-sm text-zinc-500">
-                    {lineupPlayer.player.position} - {lineupPlayer.minutesPlayed} min
+                    {lineupPlayer.player.position} -{' '}
+                    {t('common.minutesShort', {
+                      count: formatNumber(lineupPlayer.minutesPlayed),
+                    })}
                   </p>
                 </div>
               </article>

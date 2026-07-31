@@ -1,5 +1,8 @@
+import { useTranslation } from 'react-i18next';
+
 import { ApiPlayerAvatar } from '../ApiPlayerAvatar';
 import { RatingInput } from '../RatingInput';
+import { useFormatters } from '../../i18n/format';
 import type { BallotPlayer } from '../../types/match';
 
 interface PlayerRatingCardProps {
@@ -15,6 +18,9 @@ export function PlayerRatingCard({
   disabled = false,
   onChange,
 }: PlayerRatingCardProps) {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
+
   return (
     <section className="panel p-5">
       <div className="grid gap-4 lg:grid-cols-[320px_1fr] lg:items-center">
@@ -22,13 +28,17 @@ export function PlayerRatingCard({
           <ApiPlayerAvatar player={player} />
           <div>
             <p className="font-black text-zinc-950">
-              {player.shirtNumber ? `#${player.shirtNumber} ` : ''}
+              {player.shirtNumber ? `#${formatNumber(player.shirtNumber)} ` : ''}
               {player.displayName}
             </p>
-            <p className="mt-1 text-sm text-zinc-500">{player.position}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              {t(`positions.${player.position}`, { defaultValue: player.position })}
+            </p>
             <p className="mt-1 text-sm font-semibold text-zinc-600">
-              {player.participationStatus === 'starter' ? 'Titulaire' : 'Remplacant entre'} -{' '}
-              {player.minutesPlayed} min
+              {player.participationStatus === 'starter'
+                ? t('voting.starter')
+                : t('voting.substituteEntered')}{' '}
+              - {t('common.minutesShort', { count: formatNumber(player.minutesPlayed) })}
             </p>
           </div>
         </div>

@@ -157,7 +157,7 @@ describe('account pages', () => {
       expect(accountServiceMocks.updateOwnProfile).toHaveBeenCalledWith('Alex Updated');
     });
     expect(authState.refreshProfile).toHaveBeenCalledOnce();
-    expect(await screen.findByText('Profil mis a jour.')).toBeInTheDocument();
+    expect(await screen.findByText('Profil mis à jour.')).toBeInTheDocument();
   });
 
   it('rejects short passwords and mismatched confirmations before update', () => {
@@ -166,20 +166,20 @@ describe('account pages', () => {
     fireEvent.change(screen.getByLabelText('Nouveau mot de passe'), {
       target: { value: 'short' },
     });
-    fireEvent.change(screen.getByLabelText('Confirmation'), {
+    fireEvent.change(screen.getByLabelText(/Confirmation/), {
       target: { value: 'short' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }));
 
     expect(
-      screen.getByText('Le mot de passe doit contenir au moins 8 caracteres.'),
+      screen.getByText('Le mot de passe doit contenir au moins 8 caractères.'),
     ).toBeInTheDocument();
     expect(accountServiceMocks.updatePassword).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText('Nouveau mot de passe'), {
       target: { value: 'NewPassword123!' },
     });
-    fireEvent.change(screen.getByLabelText('Confirmation'), {
+    fireEvent.change(screen.getByLabelText(/Confirmation/), {
       target: { value: 'Different123!' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }));
@@ -198,7 +198,7 @@ describe('account pages', () => {
     fireEvent.change(screen.getByLabelText('Nouveau mot de passe'), {
       target: { value: 'NewPassword123!' },
     });
-    fireEvent.change(screen.getByLabelText('Confirmation'), {
+    fireEvent.change(screen.getByLabelText(/Confirmation/), {
       target: { value: 'NewPassword123!' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }));
@@ -206,7 +206,7 @@ describe('account pages', () => {
     await waitFor(() => {
       expect(accountServiceMocks.updatePassword).toHaveBeenCalledWith('NewPassword123!');
     });
-    expect(await screen.findByText('Mot de passe mis a jour.')).toBeInTheDocument();
+    expect(await screen.findByText('Mot de passe mis à jour.')).toBeInTheDocument();
     expect(screen.getByLabelText('Nouveau mot de passe')).toHaveValue('');
   });
 
@@ -225,7 +225,7 @@ describe('account pages', () => {
     });
     expect(
       await screen.findByText(
-        'Si un compte correspond a cette adresse, un lien de recuperation a ete envoye.',
+        'Si un compte correspond à cette adresse, un lien de récupération a été envoyé.',
       ),
     ).toBeInTheDocument();
   });
@@ -255,7 +255,7 @@ describe('account pages', () => {
 
     renderWithRouter(<ResetPasswordPage />);
 
-    expect(await screen.findByText('Lien expire ou invalide.')).toBeInTheDocument();
+    expect(await screen.findByText('Lien expiré ou invalide.')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Enregistrer le nouveau mot de passe' }),
     ).not.toBeInTheDocument();
@@ -275,7 +275,7 @@ describe('account pages', () => {
     fireEvent.change(await screen.findByLabelText('Nouveau mot de passe'), {
       target: { value: 'Recovered123!' },
     });
-    fireEvent.change(screen.getByLabelText('Confirmation'), {
+    fireEvent.change(screen.getByLabelText(/Confirmation/), {
       target: { value: 'Recovered123!' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer le nouveau mot de passe' }));
@@ -283,6 +283,6 @@ describe('account pages', () => {
     await waitFor(() => {
       expect(accountServiceMocks.updatePassword).toHaveBeenCalledWith('Recovered123!');
     });
-    expect(await screen.findByText(/Mot de passe mis a jour/)).toBeInTheDocument();
+    expect(await screen.findByText(/Mot de passe mis à jour/)).toBeInTheDocument();
   });
 });

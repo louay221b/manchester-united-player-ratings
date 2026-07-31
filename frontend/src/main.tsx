@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router';
 
 import { AuthProvider } from './contexts/AuthProvider';
 import { router } from './routes/router';
+import './i18n';
 import './assets/styles.css';
 
 const queryClient = new QueryClient({

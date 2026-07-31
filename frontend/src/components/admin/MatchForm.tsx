@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ImageUploadField } from '../forms/ImageUploadField';
 import type { Match, MatchPayload } from '../../types/match';
@@ -46,23 +48,23 @@ const toDatetimeLocal = (value?: string) => {
 
 const toIsoDate = (value: string) => new Date(value).toISOString();
 
-const validateMatchForm = (form: MatchFormState) => {
+const validateMatchForm = (form: MatchFormState, t: TFunction<'common'>) => {
   const errors: Partial<Record<keyof MatchFormState, string>> = {};
 
   if (!form.seasonId) {
-    errors.seasonId = 'Selectionne une saison.';
+    errors.seasonId = t('admin.matches.selectSeason');
   }
 
   if (!form.opponentName.trim()) {
-    errors.opponentName = 'L adversaire est obligatoire.';
+    errors.opponentName = t('admin.matches.opponentRequired');
   }
 
   if (!form.competition.trim()) {
-    errors.competition = 'La competition est obligatoire.';
+    errors.competition = t('admin.matches.competitionRequired');
   }
 
   if (!form.matchDate || Number.isNaN(new Date(form.matchDate).getTime())) {
-    errors.matchDate = 'La date du match est obligatoire.';
+    errors.matchDate = t('admin.matches.dateRequired');
   }
 
   return errors;
@@ -78,6 +80,7 @@ export function MatchForm({
   onSubmit,
   onCancel,
 }: MatchFormProps) {
+  const { t } = useTranslation();
   const activeSeason = seasons.find((season) => season.status === 'active') ?? seasons[0];
   const [form, setForm] = useState<MatchFormState>({
     seasonId: initialMatch?.seasonId ?? activeSeason?.id ?? '',
@@ -96,7 +99,7 @@ export function MatchForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validateMatchForm(form);
+    const nextErrors = validateMatchForm(form, t);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -125,9 +128,9 @@ export function MatchForm({
     <form onSubmit={handleSubmit} className="panel space-y-4 p-5">
       <div>
         <h2 className="text-xl font-black text-zinc-950">
-          {initialMatch ? 'Modifier le match' : 'Creer un match'}
+          {initialMatch ? t('admin.matches.edit') : t('admin.matches.create')}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Manchester United reste l equipe principale.</p>
+        <p className="mt-1 text-sm text-zinc-500">{t('admin.matches.mainTeamHelp')}</p>
       </div>
 
       {serverError ? (
@@ -137,10 +140,12 @@ export function MatchForm({
       ) : null}
 
       <ImageUploadField
-        label="Logo adversaire"
+        label={t('admin.matches.opponentLogo')}
         currentImageUrl={initialMatch?.opponentLogoUrl ?? null}
-        placeholderLabel="Logo adversaire indisponible"
-        imageAlt={`Logo de ${form.opponentName || 'adversaire'}`}
+        placeholderLabel={t('admin.matches.opponentLogoUnavailable')}
+        imageAlt={t('imageUpload.opponentLogoAlt', {
+          opponent: form.opponentName || t('admin.matches.opponent'),
+        })}
         selectedFile={selectedLogoFile}
         removeRequested={removeLogo}
         isUploading={isUploading}
@@ -152,7 +157,7 @@ export function MatchForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Saison
+          {t('common.season')}
           <select
             value={form.seasonId}
             onChange={(event) =>
@@ -161,7 +166,7 @@ export function MatchForm({
             className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
             disabled={isBusy}
           >
-            <option value="">Selectionner</option>
+            <option value="">{t('common.select')}</option>
             {seasons.map((season) => (
               <option key={season.id} value={season.id}>
                 {season.name}
@@ -172,7 +177,7 @@ export function MatchForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Competition
+          {t('admin.matches.competition')}
           <input
             value={form.competition}
             onChange={(event) =>
@@ -187,7 +192,7 @@ export function MatchForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Adversaire
+          {t('admin.matches.opponent')}
           <input
             value={form.opponentName}
             onChange={(event) =>
@@ -202,7 +207,7 @@ export function MatchForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Date
+          {t('admin.matches.date')}
           <input
             type="datetime-local"
             value={form.matchDate}
@@ -218,7 +223,7 @@ export function MatchForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Stade
+          {t('admin.matches.stadium')}
           <input
             value={form.venue}
             onChange={(event) => setForm((current) => ({ ...current, venue: event.target.value }))}
@@ -238,7 +243,7 @@ export function MatchForm({
             className="h-4 w-4 accent-united-red"
             disabled={isBusy}
           />
-          Match a domicile
+          {t('admin.matches.homeMatch')}
         </label>
       </div>
 
@@ -249,14 +254,14 @@ export function MatchForm({
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           disabled={isBusy}
         >
-          Annuler
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           disabled={isBusy}
         >
-          {isBusy ? 'Enregistrement...' : submitLabel}
+          {isBusy ? t('common.saving') : submitLabel}
         </button>
       </div>
     </form>

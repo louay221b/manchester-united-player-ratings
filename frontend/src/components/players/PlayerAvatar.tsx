@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PlayerAvatarProps {
   photoUrl: string | null;
@@ -25,6 +26,7 @@ export function PlayerAvatar({
   size = 'md',
   className = '',
 }: PlayerAvatarProps) {
+  const { t } = useTranslation();
   const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
   const displayName = `${firstName} ${lastName}`.trim();
   const initials = getInitials(firstName, lastName) || 'MU';
@@ -34,7 +36,7 @@ export function PlayerAvatar({
     return (
       <img
         src={photoUrl}
-        alt={`Photo de ${displayName}`}
+        alt={t('imageUpload.playerPhotoAlt', { player: displayName })}
         className={`${baseClass} object-cover`}
         loading="lazy"
         onError={() => setFailedPhotoUrl(photoUrl)}
@@ -45,7 +47,11 @@ export function PlayerAvatar({
   return (
     <span
       className={`flex items-center justify-center bg-zinc-950 font-black text-white ${baseClass}`}
-      aria-label={displayName ? `Initiales de ${displayName}` : 'Initiales du joueur'}
+      aria-label={
+        displayName
+          ? t('imageUpload.playerInitialsAlt', { player: displayName })
+          : t('imageUpload.playerInitialsGeneric')
+      }
       role="img"
     >
       {initials}

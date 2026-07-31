@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../../components/PageHeader';
 import { RankingFilters } from '../../components/ranking/RankingFilters';
@@ -7,13 +8,11 @@ import { RankingTable } from '../../components/ranking/RankingTable';
 import { SeasonSelector } from '../../components/ranking/SeasonSelector';
 import { useSeasonRanking } from '../../hooks/use-season-ranking';
 import { useSeasons } from '../../hooks/use-seasons';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
 import type { RankingFilters as RankingFiltersState } from '../../types/ranking';
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
-
 export function RankingPage() {
+  const { t } = useTranslation();
   const [manualSeasonId, setManualSeasonId] = useState<string | null>(null);
   const [filters, setFilters] = useState<RankingFiltersState>({});
   const seasonsQuery = useSeasons();
@@ -28,9 +27,9 @@ export function RankingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Classement"
-        title="Classement de la saison"
-        description="La moyenne saisonniere est la moyenne des notes moyennes obtenues match par match."
+        eyebrow={t('ranking.eyebrow')}
+        title={t('ranking.title')}
+        description={t('ranking.description')}
       />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -46,19 +45,14 @@ export function RankingPage() {
       </div>
 
       {seasonsQuery.isLoading || rankingQuery.isLoading ? (
-        <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Chargement du classement...
-        </div>
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('ranking.loading')}</div>
       ) : null}
 
       {seasonsQuery.isError || rankingQuery.isError ? (
         <section className="panel border-red-200 bg-red-50 p-6">
-          <p className="font-black text-red-800">Classement indisponible</p>
+          <p className="font-black text-red-800">{t('ranking.unavailable')}</p>
           <p className="mt-2 text-sm text-red-700">
-            {getErrorMessage(
-              seasonsQuery.error ?? rankingQuery.error,
-              'Impossible de charger le classement.',
-            )}
+            {translateApiError(seasonsQuery.error ?? rankingQuery.error, t, 'ranking.loadError')}
           </p>
           <button
             type="button"
@@ -68,20 +62,18 @@ export function RankingPage() {
             }}
             className="mt-4 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
-            Reessayer
+            {t('common.retry')}
           </button>
         </section>
       ) : null}
 
       {!seasonsQuery.isLoading && seasons.length === 0 ? (
-        <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Aucune saison n est encore disponible.
-        </div>
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('ranking.noSeason')}</div>
       ) : null}
 
       {!rankingQuery.isLoading && rankingQuery.data && rankingRows.length > 0 && !hasRatedRows ? (
         <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Aucun resultat n est encore publie pour cette saison.
+          {t('ranking.noPublished')}
         </div>
       ) : null}
 

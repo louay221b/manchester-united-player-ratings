@@ -1,3 +1,5 @@
+import { useFormatters } from '../i18n/format';
+
 const ratings = Array.from({ length: 19 }, (_, index) => 1 + index * 0.5);
 
 interface RatingInputProps {
@@ -7,6 +9,8 @@ interface RatingInputProps {
 }
 
 export function RatingInput({ value, onChange, disabled = false }: RatingInputProps) {
+  const { formatRatingStep } = useFormatters();
+
   return (
     <div className="grid grid-cols-5 gap-2 sm:grid-cols-10 lg:grid-cols-[repeat(19,minmax(0,1fr))]">
       {ratings.map((rating) => {
@@ -27,7 +31,7 @@ export function RatingInput({ value, onChange, disabled = false }: RatingInputPr
               disabled ? 'cursor-not-allowed opacity-60' : '',
             ].join(' ')}
           >
-            {rating.toFixed(rating % 1 === 0 ? 0 : 1)}
+            {formatRatingStep(rating)}
           </button>
         );
       })}

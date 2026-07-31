@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../../components/PageHeader';
 import { RankingFilters } from '../../components/ranking/RankingFilters';
@@ -7,16 +8,16 @@ import { SeasonSelector } from '../../components/ranking/SeasonSelector';
 import { StatCard } from '../../components/StatCard';
 import { useAdminSeasonStatistics } from '../../hooks/use-season-ranking';
 import { useSeasons } from '../../hooks/use-seasons';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import type {
   AdminStatisticsFilters,
   RankingFilters as RankingFiltersState,
 } from '../../types/ranking';
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
-
 export function AdminStatisticsPage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const [manualSeasonId, setManualSeasonId] = useState<string | null>(null);
   const [filters, setFilters] = useState<AdminStatisticsFilters>({
     publishedOnly: false,
@@ -44,9 +45,9 @@ export function AdminStatisticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Statistiques de la saison"
-        description="Classement calcule depuis les votes reels, avec moyenne de saison par moyennes de match."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.statistics.title')}
+        description={t('admin.statistics.description')}
       />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -73,24 +74,24 @@ export function AdminStatisticsPage() {
 
       {!filters.publishedOnly ? (
         <div className="panel border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-          Ces statistiques administrateur incluent les matchs dont les votes sont clotures, meme si
-          les resultats ne sont pas encore publies.
+          {t('admin.statistics.unpublishedIncluded')}
         </div>
       ) : null}
 
       {seasonsQuery.isLoading || statisticsQuery.isLoading ? (
         <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Chargement des statistiques...
+          {t('admin.statistics.loading')}
         </div>
       ) : null}
 
       {seasonsQuery.isError || statisticsQuery.isError ? (
         <section className="panel border-red-200 bg-red-50 p-6">
-          <p className="font-black text-red-800">Statistiques indisponibles</p>
+          <p className="font-black text-red-800">{t('admin.statistics.unavailable')}</p>
           <p className="mt-2 text-sm text-red-700">
-            {getErrorMessage(
+            {translateApiError(
               seasonsQuery.error ?? statisticsQuery.error,
-              'Impossible de charger les statistiques.',
+              t,
+              'admin.statistics.loadError',
             )}
           </p>
           <button
@@ -101,34 +102,50 @@ export function AdminStatisticsPage() {
             }}
             className="mt-4 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
-            Reessayer
+            {t('common.retry')}
           </button>
         </section>
       ) : null}
 
       {!seasonsQuery.isLoading && seasons.length === 0 ? (
-        <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Aucune saison n est encore disponible.
-        </div>
+        <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('ranking.noSeason')}</div>
       ) : null}
 
       {summary ? (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Matchs totaux" value={summary.totalMatches} />
-          <StatCard label="Matchs termines" value={summary.finishedMatches} />
-          <StatCard label="Votes clotures" value={summary.matchesWithCompletedVoting} />
-          <StatCard label="Resultats publies" value={summary.publishedMatches} />
-          <StatCard label="Notes recues" value={summary.totalRatings} />
-          <StatCard label="Utilisateurs ayant vote" value={summary.usersWhoVoted} />
-          <StatCard label="Joueurs notes" value={summary.playersRated} />
+          <StatCard
+            label={t('admin.statistics.totalMatches')}
+            value={formatNumber(summary.totalMatches)}
+          />
+          <StatCard
+            label={t('admin.statistics.finishedMatches')}
+            value={formatNumber(summary.finishedMatches)}
+          />
+          <StatCard
+            label={t('admin.statistics.closedVotes')}
+            value={formatNumber(summary.matchesWithCompletedVoting)}
+          />
+          <StatCard
+            label={t('admin.statistics.publishedResults')}
+            value={formatNumber(summary.publishedMatches)}
+          />
+          <StatCard
+            label={t('admin.statistics.receivedRatings')}
+            value={formatNumber(summary.totalRatings)}
+          />
+          <StatCard
+            label={t('admin.statistics.votingUsers')}
+            value={formatNumber(summary.usersWhoVoted)}
+          />
+          <StatCard
+            label={t('admin.statistics.ratedPlayers')}
+            value={formatNumber(summary.playersRated)}
+          />
         </section>
       ) : null}
 
       {statisticsQuery.data ? (
-        <RankingTable
-          rows={rankingRows}
-          emptyMessage="Aucun joueur ne correspond aux filtres de statistiques."
-        />
+        <RankingTable rows={rankingRows} emptyMessage={t('ranking.noMatchingStatistics')} />
       ) : null}
     </div>
   );

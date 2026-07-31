@@ -1,15 +1,17 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/useAuth';
 
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
 
   if (isLoading) {
     return (
       <div className="panel p-6 text-sm font-semibold text-zinc-600">
-        Chargement de la session...
+        {t('common.sessionLoading')}
       </div>
     );
   }

@@ -1,7 +1,9 @@
 import { Link } from 'react-router';
 import { Medal } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { ApiPlayerAvatar } from '../ApiPlayerAvatar';
+import { useFormatters } from '../../i18n/format';
 import type { SeasonRankingRow } from '../../types/ranking';
 
 interface RankingPodiumProps {
@@ -14,9 +16,9 @@ const podiumStyles = [
   'border-amber-200 bg-amber-50',
 ];
 
-const formatAverage = (value: number | null) => (value === null ? '—' : value.toFixed(2));
-
 export function RankingPodium({ rows }: RankingPodiumProps) {
+  const { t } = useTranslation();
+  const { formatNumber, formatRating } = useFormatters();
   const podiumRows = rows.filter((row) => row.seasonAverage !== null).slice(0, 3);
 
   if (podiumRows.length === 0) {
@@ -48,11 +50,11 @@ export function RankingPodium({ rows }: RankingPodiumProps) {
             />
             <span className="min-w-0">
               <span className="block text-sm font-black uppercase tracking-wide text-united-red">
-                #{row.rank}
+                #{formatNumber(row.rank)}
               </span>
               <span className="block truncate text-lg font-black text-zinc-950">{displayName}</span>
               <span className="mt-1 block text-sm font-semibold text-zinc-600">
-                {formatAverage(row.seasonAverage)} de moyenne
+                {t('ranking.averageSuffix', { rating: formatRating(row.seasonAverage) })}
               </span>
             </span>
           </Link>

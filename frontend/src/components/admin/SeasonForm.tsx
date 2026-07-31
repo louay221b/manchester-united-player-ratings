@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { Season, SeasonPayload, SeasonStatus } from '../../types/season';
 
@@ -21,23 +23,23 @@ interface SeasonFormState {
 
 const statusOptions: SeasonStatus[] = ['draft', 'active', 'closed'];
 
-const validateSeasonForm = (form: SeasonFormState) => {
+const validateSeasonForm = (form: SeasonFormState, t: TFunction<'common'>) => {
   const errors: Partial<Record<keyof SeasonFormState, string>> = {};
 
   if (!/^\d{4}\/\d{4}$/.test(form.name.trim())) {
-    errors.name = 'Utilise le format YYYY/YYYY.';
+    errors.name = t('admin.seasons.nameFormat');
   }
 
   if (!form.startDate) {
-    errors.startDate = 'La date de debut est obligatoire.';
+    errors.startDate = t('admin.seasons.startRequired');
   }
 
   if (!form.endDate) {
-    errors.endDate = 'La date de fin est obligatoire.';
+    errors.endDate = t('admin.seasons.endRequired');
   }
 
   if (form.startDate && form.endDate && form.endDate <= form.startDate) {
-    errors.endDate = 'La date de fin doit etre apres la date de debut.';
+    errors.endDate = t('admin.seasons.endAfterStart');
   }
 
   return errors;
@@ -51,6 +53,7 @@ export function SeasonForm({
   onSubmit,
   onCancel,
 }: SeasonFormProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<SeasonFormState>({
     name: initialSeason?.name ?? '',
     startDate: initialSeason?.startDate ?? '',
@@ -62,7 +65,7 @@ export function SeasonForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validateSeasonForm(form);
+    const nextErrors = validateSeasonForm(form, t);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -81,9 +84,9 @@ export function SeasonForm({
     <form onSubmit={handleSubmit} className="panel space-y-4 p-5">
       <div>
         <h2 className="text-xl font-black text-zinc-950">
-          {initialSeason ? 'Modifier la saison' : 'Creer une saison'}
+          {initialSeason ? t('admin.seasons.edit') : t('admin.seasons.create')}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">Les saisons actives sont uniques cote base.</p>
+        <p className="mt-1 text-sm text-zinc-500">{t('admin.seasons.activeUnique')}</p>
       </div>
 
       {serverError ? (
@@ -94,7 +97,7 @@ export function SeasonForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Nom
+          {t('admin.seasons.name')}
           <input
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -106,7 +109,7 @@ export function SeasonForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Statut
+          {t('common.status')}
           <select
             value={form.status}
             onChange={(event) =>
@@ -117,14 +120,14 @@ export function SeasonForm({
           >
             {statusOptions.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {t(`statuses.season.${status}`)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Date de debut
+          {t('admin.seasons.startDate')}
           <input
             type="date"
             value={form.startDate}
@@ -140,7 +143,7 @@ export function SeasonForm({
         </label>
 
         <label className="space-y-1 text-sm font-bold text-zinc-700">
-          Date de fin
+          {t('admin.seasons.endDate')}
           <input
             type="date"
             value={form.endDate}
@@ -161,14 +164,14 @@ export function SeasonForm({
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           disabled={isSubmitting}
         >
-          Annuler
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Enregistrement...' : submitLabel}
+          {isSubmitting ? t('common.saving') : submitLabel}
         </button>
       </div>
     </form>

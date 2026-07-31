@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
@@ -8,7 +9,8 @@ import { useMatches } from '../../hooks/use-matches';
 import { usePlayers } from '../../hooks/use-players';
 import { useAdminSeasonStatistics } from '../../hooks/use-season-ranking';
 import { useSeasons } from '../../hooks/use-seasons';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import { verifyAdminApiAccess } from '../../services/auth-api.service';
 import type { MatchFilters } from '../../types/match';
 import type { PlayerFilters } from '../../types/player';
@@ -20,6 +22,8 @@ const activePlayersFilters: PlayerFilters = { page: 1, limit: 1, active: true };
 const dashboardStatisticsFilters: AdminStatisticsFilters = { publishedOnly: false };
 
 export function AdminDashboardPage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const seasonsQuery = useSeasons();
   const matchesQuery = useMatches(allMatchesFilters);
   const openMatchesQuery = useMatches(openMatchesFilters);
@@ -32,30 +36,25 @@ export function AdminDashboardPage() {
   );
   const leader = statisticsQuery.data?.ranking.find((row) => row.seasonAverage !== null);
   const [apiStatus, setApiStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [apiMessage, setApiMessage] = useState('');
+  const [apiError, setApiError] = useState<unknown>(null);
 
   useEffect(() => {
     let isCancelled = false;
 
     const verifyApiAccess = async () => {
       setApiStatus('loading');
-      setApiMessage('');
+      setApiError(null);
 
       try {
         await verifyAdminApiAccess();
 
         if (!isCancelled) {
           setApiStatus('success');
-          setApiMessage('Acces API administrateur verifie');
         }
       } catch (error) {
         if (!isCancelled) {
           setApiStatus('error');
-          setApiMessage(
-            error instanceof ApiError
-              ? error.message
-              : 'Impossible de verifier l acces API administrateur.',
-          );
+          setApiError(error);
         }
       }
     };
@@ -70,19 +69,33 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Tableau de bord"
-        description="Vue API pour piloter les saisons, les joueurs, les matchs et les votes."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.dashboard.title')}
+        description={t('admin.dashboard.description')}
       />
 
       <section className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Saison active" value={activeSeason?.name ?? '—'} />
-        <StatCard label="Joueurs actifs" value={playersQuery.data?.pagination.total ?? '—'} />
-        <StatCard label="Matchs" value={matchesQuery.data?.pagination.total ?? '—'} />
+        <StatCard label={t('common.activeSeason')} value={activeSeason?.name ?? t('common.dash')} />
         <StatCard
-          label="Votes ouverts"
-          value={openMatchesQuery.data?.pagination.total ?? '—'}
-          helper="Matchs ouverts au vote"
+          label={t('home.activePlayers')}
+          value={
+            playersQuery.data ? formatNumber(playersQuery.data.pagination.total) : t('common.dash')
+          }
+        />
+        <StatCard
+          label={t('navigation.matches')}
+          value={
+            matchesQuery.data ? formatNumber(matchesQuery.data.pagination.total) : t('common.dash')
+          }
+        />
+        <StatCard
+          label={t('statuses.voting.open')}
+          value={
+            openMatchesQuery.data
+              ? formatNumber(openMatchesQuery.data.pagination.total)
+              : t('common.dash')
+          }
+          helper={t('navigation.matches')}
         />
       </section>
 
@@ -94,7 +107,7 @@ export function AdminDashboardPage() {
         ].join(' ')}
       >
         <p className="text-sm font-black uppercase tracking-[0.12em] text-zinc-500">
-          Verification API
+          {t('admin.dashboard.apiVerification')}
         </p>
         <p
           className={[
@@ -104,7 +117,11 @@ export function AdminDashboardPage() {
             apiStatus === 'loading' ? 'text-zinc-700' : '',
           ].join(' ')}
         >
-          {apiStatus === 'loading' ? 'Verification de l acces API administrateur...' : apiMessage}
+          {apiStatus === 'loading'
+            ? t('admin.dashboard.apiChecking')
+            : apiStatus === 'success'
+              ? t('admin.dashboard.apiSuccess')
+              : translateApiError(apiError, t, 'admin.dashboard.apiError')}
         </p>
       </section>
 
@@ -114,8 +131,7 @@ export function AdminDashboardPage() {
         openMatchesQuery.isError ||
         statisticsQuery.isError) && (
         <section className="panel border-red-200 bg-red-50 p-5 text-sm font-semibold text-red-700">
-          Certaines donnees du tableau de bord sont indisponibles. Verifie l API et la session
-          administrateur.
+          {t('admin.dashboard.partialDataError')}
         </section>
       )}
 
@@ -126,9 +142,9 @@ export function AdminDashboardPage() {
         >
           <CalendarDays className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
-            <span className="block font-black text-zinc-950">Matchs</span>
+            <span className="block font-black text-zinc-950">{t('navigation.matchesAdmin')}</span>
             <span className="mt-1 block text-sm text-zinc-500">
-              Scores, statuts et adversaires.
+              {t('admin.dashboard.matchesDescription')}
             </span>
           </span>
         </Link>
@@ -138,8 +154,10 @@ export function AdminDashboardPage() {
         >
           <Users className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
-            <span className="block font-black text-zinc-950">Joueurs</span>
-            <span className="mt-1 block text-sm text-zinc-500">Effectif Manchester United.</span>
+            <span className="block font-black text-zinc-950">{t('navigation.players')}</span>
+            <span className="mt-1 block text-sm text-zinc-500">
+              {t('admin.dashboard.playersDescription')}
+            </span>
           </span>
         </Link>
         <Link
@@ -148,17 +166,21 @@ export function AdminDashboardPage() {
         >
           <BarChart3 className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
-            <span className="block font-black text-zinc-950">Statistiques</span>
-            <span className="mt-1 block text-sm text-zinc-500">Moyennes de saison calculees.</span>
+            <span className="block font-black text-zinc-950">{t('navigation.statistics')}</span>
+            <span className="mt-1 block text-sm text-zinc-500">
+              {t('admin.dashboard.statisticsDescription')}
+            </span>
           </span>
         </Link>
         <article className="panel flex items-start gap-4 p-5">
           <Trophy className="mt-1 text-united-red" size={24} aria-hidden="true" />
           <span>
             <span className="block font-black text-zinc-950">
-              {leader ? `${leader.firstName} ${leader.lastName}` : '—'}
+              {leader ? `${leader.firstName} ${leader.lastName}` : t('common.dash')}
             </span>
-            <span className="mt-1 block text-sm text-zinc-500">Leader actuel</span>
+            <span className="mt-1 block text-sm text-zinc-500">
+              {t('admin.dashboard.currentLeader')}
+            </span>
           </span>
         </article>
       </section>

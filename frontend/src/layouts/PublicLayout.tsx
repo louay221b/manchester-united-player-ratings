@@ -2,27 +2,26 @@ import { Link, Outlet, useNavigate } from 'react-router';
 
 import { BrandLogo } from '../components/layout/BrandLogo';
 import { Footer } from '../components/layout/Footer';
+import { LanguageSwitcher } from '../components/layout/LanguageSwitcher';
 import { NavLinkItem } from '../components/NavLinkItem';
 import { useAuth } from '../contexts/useAuth';
-
-const baseLinks = [
-  { to: '/', label: 'Accueil', end: true },
-  { to: '/matches', label: 'Matchs' },
-  { to: '/ranking', label: 'Classement' },
-];
+import { useTranslation } from 'react-i18next';
 
 export function PublicLayout() {
   const { isAuthenticated, isLoading, profile, role, signOut, user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const displayName = profile?.full_name || user?.email || 'Compte';
   const links = [
-    ...baseLinks,
-    ...(isAuthenticated && !isLoading ? [{ to: '/profile', label: 'Profil' }] : []),
-    ...(role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
+    { to: '/', label: t('navigation.home'), end: true },
+    { to: '/matches', label: t('navigation.matches') },
+    { to: '/ranking', label: t('navigation.ranking') },
+    ...(isAuthenticated && !isLoading ? [{ to: '/profile', label: t('navigation.profile') }] : []),
+    ...(role === 'admin' ? [{ to: '/admin', label: t('navigation.admin') }] : []),
     ...(!isAuthenticated && !isLoading
       ? [
-          { to: '/login', label: 'Connexion' },
-          { to: '/register', label: 'Inscription' },
+          { to: '/login', label: t('navigation.signIn') },
+          { to: '/register', label: t('navigation.signUp') },
         ]
       : []),
   ];
@@ -41,32 +40,35 @@ export function PublicLayout() {
               <BrandLogo />
               <span>
                 <span className="block text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
-                  Manchester United
+                  {t('brand.name')}
                 </span>
-                <span className="block text-lg font-black text-zinc-950">Player Ratings</span>
+                <span className="block text-lg font-black text-zinc-950">{t('brand.title')}</span>
               </span>
             </Link>
-            {isLoading ? (
-              <span className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-bold text-zinc-500">
-                Session...
-              </span>
-            ) : isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <span className="hidden text-right text-sm sm:block">
-                  <span className="block font-black text-zinc-950">{displayName}</span>
-                  <span className="text-xs font-semibold uppercase text-zinc-500">
-                    {role ?? 'user'}
-                  </span>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <LanguageSwitcher />
+              {isLoading ? (
+                <span className="rounded-md border border-zinc-200 px-3 py-2 text-sm font-bold text-zinc-500">
+                  {t('common.sessionLoading')}
                 </span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-black text-white hover:bg-zinc-800"
-                >
-                  Deconnexion
-                </button>
-              </div>
-            ) : null}
+              ) : isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <span className="hidden text-end text-sm sm:block">
+                    <span className="block font-black text-zinc-950">{displayName}</span>
+                    <span className="text-xs font-semibold uppercase text-zinc-500">
+                      {role ?? 'user'}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-black text-white hover:bg-zinc-800"
+                  >
+                    {t('navigation.signOut')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
           <nav className="flex gap-2 overflow-x-auto pb-1">
             {links.map((link) => (

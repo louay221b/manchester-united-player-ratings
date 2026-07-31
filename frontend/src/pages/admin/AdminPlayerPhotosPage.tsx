@@ -1,17 +1,18 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ImagePlus, Loader2, Trash2, UploadCloud, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
 
 import { PageHeader } from '../../components/PageHeader';
 import { PlayerAvatar } from '../../components/players/PlayerAvatar';
-import { playerQueryKey, playersQueryKey, usePlayers } from '../../hooks/use-players';
 import { matchLineupsQueryKey, rankingsQueryKey } from '../../hooks/query-keys';
-import { ApiError } from '../../lib/api';
+import { playerQueryKey, playersQueryKey, usePlayers } from '../../hooks/use-players';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import { updatePlayer } from '../../services/players-api.service';
 import {
   removePlayerPhoto,
-  StorageValidationError,
   uploadPlayerPhoto,
   validateImageFile,
 } from '../../services/storage.service';
@@ -42,26 +43,6 @@ interface PlayerListCache {
 const activePlayersFilters = { page: 1, limit: 100, active: true };
 const maxConcurrentUploads = 2;
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError || error instanceof StorageValidationError
-    ? error.message
-    : error instanceof Error
-      ? error.message
-      : fallback;
-
-const formatFileSize = (size: number) => {
-  if (size < 1024 * 1024) {
-    return `${Math.max(1, Math.round(size / 1024))} Ko`;
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} Mo`;
-};
-
-const formatPlayerOption = (player: Player) =>
-  [player.displayName, player.shirtNumber ? `#${player.shirtNumber}` : null, player.position]
-    .filter(Boolean)
-    .join(' - ');
-
 const getItemId = (file: File, index: number) =>
   `${file.name}-${file.size}-${file.lastModified}-${index}`;
 
@@ -83,6 +64,7 @@ const runWithConcurrencyLimit = async <T,>(
 };
 
 function FilePreview({ file }: { file: File }) {
+  const { t } = useTranslation();
   const previewUrl = useMemo(() => URL.createObjectURL(file), [file]);
 
   useEffect(() => {
@@ -94,7 +76,7 @@ function FilePreview({ file }: { file: File }) {
   return (
     <img
       src={previewUrl}
-      alt={`Previsualisation ${file.name}`}
+      alt={t('admin.photos.previewAlt', { file: file.name })}
       className="h-16 w-16 shrink-0 rounded-lg object-cover"
     />
   );
@@ -108,7 +90,7 @@ function StatusMessage({ result }: { result?: RowResult | Pick<BatchItem, 'statu
   const styles =
     result.status === 'sent'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-      : result.status === 'skipped'
+      : result.status === 'skipped' || result.status === 'ready' || result.status === 'uploading'
         ? 'border-zinc-200 bg-zinc-50 text-zinc-600'
         : 'border-red-200 bg-red-50 text-red-700';
 
@@ -120,6 +102,8 @@ function StatusMessage({ result }: { result?: RowResult | Pick<BatchItem, 'statu
 }
 
 export function AdminPlayerPhotosPage() {
+  const { t } = useTranslation();
+  const { formatFileSize, formatNumber } = useFormatters();
   const queryClient = useQueryClient();
   const playersQuery = usePlayers(activePlayersFilters);
   const players = useMemo(() => playersQuery.data?.data ?? [], [playersQuery.data?.data]);
@@ -134,6 +118,15 @@ export function AdminPlayerPhotosPage() {
   const [processingRows, setProcessingRows] = useState<Record<string, boolean>>({});
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [isBatchUploading, setIsBatchUploading] = useState(false);
+
+  const formatPlayerOption = (player: Player) =>
+    [
+      player.displayName,
+      player.shirtNumber ? `#${formatNumber(player.shirtNumber)}` : null,
+      t(`positions.${player.position}`, { defaultValue: player.position }),
+    ]
+      .filter(Boolean)
+      .join(' - ');
 
   const updateCachedPlayer = (updatedPlayer: Player) => {
     queryClient.setQueryData(playerQueryKey(updatedPlayer.id), updatedPlayer);
@@ -220,9 +213,7 @@ export function AdminPlayerPhotosPage() {
 
       return {
         status: cleanupWarning ? 'error' : 'sent',
-        message: cleanupWarning
-          ? 'Photo envoyee, mais ancienne photo non supprimee automatiquement.'
-          : 'Photo envoyee.',
+        message: cleanupWarning ? t('admin.photos.sentCleanupWarning') : t('admin.photos.sent'),
       };
     } catch (error) {
       if (uploadedPhoto) {
@@ -231,7 +222,7 @@ export function AdminPlayerPhotosPage() {
 
       return {
         status: 'error',
-        message: getErrorMessage(error, 'Impossible d envoyer cette photo.'),
+        message: translateApiError(error, t, 'admin.photos.uploadFailed'),
       };
     }
   };
@@ -240,7 +231,7 @@ export function AdminPlayerPhotosPage() {
     if (!player.photoPath && !player.photoUrl) {
       return {
         status: 'skipped',
-        message: 'Aucune photo a supprimer.',
+        message: t('admin.photos.noPhoto'),
       };
     }
 
@@ -257,13 +248,13 @@ export function AdminPlayerPhotosPage() {
       return {
         status: cleanupWarning ? 'error' : 'sent',
         message: cleanupWarning
-          ? 'Photo retiree du profil, mais fichier Storage non supprime automatiquement.'
-          : 'Photo supprimee.',
+          ? t('admin.photos.removedProfileCleanupWarning')
+          : t('admin.photos.removed'),
       };
     } catch (error) {
       return {
         status: 'error',
-        message: getErrorMessage(error, 'Impossible de supprimer cette photo.'),
+        message: translateApiError(error, t, 'admin.photos.deleteFailed'),
       };
     }
   };
@@ -286,7 +277,7 @@ export function AdminPlayerPhotosPage() {
       setSelectedFilesByPlayer((current) => ({ ...current, [playerId]: file }));
       setRowResults((current) => ({
         ...current,
-        [playerId]: { status: 'ready', message: 'Photo prete a envoyer.' },
+        [playerId]: { status: 'ready', message: t('admin.photos.readyPhoto') },
       }));
     } catch (error) {
       setSelectedFilesByPlayer((current) => ({ ...current, [playerId]: null }));
@@ -294,7 +285,7 @@ export function AdminPlayerPhotosPage() {
         ...current,
         [playerId]: {
           status: 'error',
-          message: getErrorMessage(error, 'Image invalide.'),
+          message: translateApiError(error, t, 'common.invalidImage'),
         },
       }));
     }
@@ -306,7 +297,7 @@ export function AdminPlayerPhotosPage() {
     if (!file) {
       setRowResults((current) => ({
         ...current,
-        [player.id]: { status: 'skipped', message: 'Selectionne une photo avant l envoi.' },
+        [player.id]: { status: 'skipped', message: t('admin.photos.selectBeforeUpload') },
       }));
       return;
     }
@@ -314,7 +305,7 @@ export function AdminPlayerPhotosPage() {
     setRowProcessing(player.id, true);
     setRowResults((current) => ({
       ...current,
-      [player.id]: { status: 'uploading', message: 'Upload en cours...' },
+      [player.id]: { status: 'uploading', message: t('admin.photos.uploading') },
     }));
 
     const result = await uploadPhotoForPlayer(player, file);
@@ -328,7 +319,7 @@ export function AdminPlayerPhotosPage() {
     setRowProcessing(player.id, true);
     setRowResults((current) => ({
       ...current,
-      [player.id]: { status: 'uploading', message: 'Suppression en cours...' },
+      [player.id]: { status: 'uploading', message: t('admin.photos.deleting') },
     }));
 
     const result = await removePhotoForPlayer(player);
@@ -352,7 +343,7 @@ export function AdminPlayerPhotosPage() {
           file,
           playerId: '',
           status: 'ready',
-          message: 'Selectionne le joueur correspondant.',
+          message: t('admin.photos.readySelectPlayer'),
         };
       } catch (error) {
         return {
@@ -360,7 +351,7 @@ export function AdminPlayerPhotosPage() {
           file,
           playerId: '',
           status: 'error',
-          message: getErrorMessage(error, 'Image invalide.'),
+          message: translateApiError(error, t, 'common.invalidImage'),
         };
       }
     });
@@ -393,20 +384,20 @@ export function AdminPlayerPhotosPage() {
       }
 
       if (!item.playerId) {
-        return { ...item, status: 'error', message: 'Selectionne un joueur pour ce fichier.' };
+        return { ...item, status: 'error', message: t('admin.photos.selectPlayerForFile') };
       }
 
       if (seenPlayerIds.has(item.playerId)) {
         return {
           ...item,
           status: 'error',
-          message: 'Ce joueur est deja associe a un autre fichier.',
+          message: t('admin.photos.duplicatePlayer'),
         };
       }
 
       seenPlayerIds.add(item.playerId);
       uploadableItems.push(item);
-      return { ...item, status: 'ready', message: 'En attente d upload.' };
+      return { ...item, status: 'ready', message: t('admin.photos.waiting') };
     });
 
     setBatchItems(nextItems);
@@ -424,7 +415,7 @@ export function AdminPlayerPhotosPage() {
         updateBatchItem(item.id, (current) => ({
           ...current,
           status: 'error',
-          message: 'Joueur introuvable.',
+          message: t('admin.photos.playerNotFound'),
         }));
         return;
       }
@@ -432,7 +423,7 @@ export function AdminPlayerPhotosPage() {
       updateBatchItem(item.id, (current) => ({
         ...current,
         status: 'uploading',
-        message: 'Upload en cours...',
+        message: t('admin.photos.uploading'),
       }));
 
       const result = await uploadPhotoForPlayer(player, item.file);
@@ -470,37 +461,37 @@ export function AdminPlayerPhotosPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Administration"
-        title="Gestion des photos joueurs"
-        description="Selection manuelle des images autorisees, upload Supabase Storage et remplacement securise."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.photos.title')}
+        description={t('admin.photos.description')}
         action={
           <Link
             to="/admin/players"
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
           >
-            Retour aux joueurs
+            {t('admin.photos.backToPlayers')}
           </Link>
         }
       />
 
       {playersQuery.isLoading ? (
         <div className="panel p-6 text-sm font-semibold text-zinc-600">
-          Chargement des joueurs...
+          {t('admin.players.loading')}
         </div>
       ) : null}
 
       {playersQuery.isError ? (
         <section className="panel border-red-200 bg-red-50 p-6">
-          <p className="font-black text-red-800">Joueurs indisponibles</p>
+          <p className="font-black text-red-800">{t('admin.players.unavailable')}</p>
           <p className="mt-2 text-sm text-red-700">
-            {getErrorMessage(playersQuery.error, 'Impossible de charger les joueurs.')}
+            {translateApiError(playersQuery.error, t, 'admin.players.loadError')}
           </p>
           <button
             type="button"
             onClick={() => void playersQuery.refetch()}
             className="mt-4 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
           >
-            Reessayer
+            {t('common.retry')}
           </button>
         </section>
       ) : null}
@@ -509,16 +500,15 @@ export function AdminPlayerPhotosPage() {
         <>
           <section className="panel space-y-4 p-5">
             <div>
-              <h2 className="text-xl font-black text-zinc-950">Import groupe</h2>
+              <h2 className="text-xl font-black text-zinc-950">{t('admin.photos.batch')}</h2>
               <p className="mt-1 text-sm font-semibold text-zinc-500">
-                Chaque fichier doit etre associe explicitement a un joueur. Aucun nom de fichier n
-                est devine automatiquement.
+                {t('admin.photos.batchHelp')}
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-black text-zinc-700 hover:border-united-red hover:text-united-red">
                 <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                Selectionner plusieurs fichiers
+                {t('admin.photos.selectMany')}
                 <input
                   type="file"
                   multiple
@@ -526,7 +516,7 @@ export function AdminPlayerPhotosPage() {
                   className="sr-only"
                   onChange={(event) => handleBatchFiles(event.target.files)}
                   disabled={isBatchUploading}
-                  aria-label="Selectionner plusieurs photos"
+                  aria-label={t('admin.photos.selectManyAria')}
                 />
               </label>
               {batchItems.length > 0 ? (
@@ -538,7 +528,9 @@ export function AdminPlayerPhotosPage() {
                     className="inline-flex items-center justify-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
                   >
                     <UploadCloud className="h-4 w-4" aria-hidden="true" />
-                    {isBatchUploading ? 'Import en cours...' : 'Envoyer l import'}
+                    {isBatchUploading
+                      ? t('admin.photos.batchUploading')
+                      : t('admin.photos.sendBatch')}
                   </button>
                   <button
                     type="button"
@@ -546,7 +538,7 @@ export function AdminPlayerPhotosPage() {
                     disabled={isBatchUploading}
                     className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
                   >
-                    Vider
+                    {t('admin.photos.clear')}
                   </button>
                 </>
               ) : null}
@@ -576,7 +568,7 @@ export function AdminPlayerPhotosPage() {
                         </div>
                       </div>
                       <label className="space-y-1 text-sm font-bold text-zinc-700">
-                        Joueur correspondant
+                        {t('admin.photos.matchingPlayer')}
                         <select
                           value={item.playerId}
                           onChange={(event) =>
@@ -585,8 +577,8 @@ export function AdminPlayerPhotosPage() {
                               playerId: event.target.value,
                               status: current.status === 'error' ? 'ready' : current.status,
                               message: event.target.value
-                                ? 'Pret a envoyer.'
-                                : 'Selectionne le joueur correspondant.',
+                                ? t('admin.photos.readyToSend')
+                                : t('admin.photos.readySelectPlayer'),
                             }))
                           }
                           className="focus-ring w-full rounded-md border border-zinc-300 px-3 py-2"
@@ -594,7 +586,7 @@ export function AdminPlayerPhotosPage() {
                             isBatchUploading || item.status === 'sent' || item.status === 'skipped'
                           }
                         >
-                          <option value="">Selectionner</option>
+                          <option value="">{t('common.select')}</option>
                           {players.map((player) => (
                             <option
                               key={player.id}
@@ -612,7 +604,7 @@ export function AdminPlayerPhotosPage() {
                           updateBatchItem(item.id, (current) => ({
                             ...current,
                             status: 'skipped',
-                            message: 'Fichier ignore.',
+                            message: t('admin.photos.ignored'),
                           }))
                         }
                         className="h-fit rounded-md border border-zinc-300 px-3 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
@@ -620,7 +612,7 @@ export function AdminPlayerPhotosPage() {
                           isBatchUploading || item.status === 'sent' || item.status === 'skipped'
                         }
                       >
-                        Ignorer
+                        {t('admin.photos.ignore')}
                       </button>
                     </article>
                   );
@@ -631,10 +623,12 @@ export function AdminPlayerPhotosPage() {
 
           <section className="panel overflow-hidden">
             <div className="border-b border-zinc-200 px-5 py-4">
-              <h2 className="text-xl font-black text-zinc-950">Photos individuelles</h2>
+              <h2 className="text-xl font-black text-zinc-950">{t('admin.photos.individual')}</h2>
             </div>
             {players.length === 0 ? (
-              <div className="p-6 text-sm font-semibold text-zinc-600">Aucun joueur actif.</div>
+              <div className="p-6 text-sm font-semibold text-zinc-600">
+                {t('admin.photos.noActivePlayers')}
+              </div>
             ) : (
               <div className="divide-y divide-zinc-200">
                 {players.map((player) => {
@@ -660,8 +654,8 @@ export function AdminPlayerPhotosPage() {
                         <div className="min-w-0">
                           <p className="font-black text-zinc-950">{player.displayName}</p>
                           <p className="text-sm font-semibold text-zinc-500">
-                            {player.shirtNumber ? `#${player.shirtNumber} - ` : ''}
-                            {player.position}
+                            {player.shirtNumber ? `#${formatNumber(player.shirtNumber)} - ` : ''}
+                            {t(`positions.${player.position}`, { defaultValue: player.position })}
                           </p>
                           {selectedFile ? (
                             <p className="mt-1 truncate text-sm font-semibold text-zinc-600">
@@ -673,13 +667,15 @@ export function AdminPlayerPhotosPage() {
                       <div className="space-y-2">
                         <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-black text-zinc-700 hover:border-united-red hover:text-united-red">
                           <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                          Selectionner une photo
+                          {t('admin.photos.selectPhoto')}
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
                             className="sr-only"
                             disabled={isProcessing}
-                            aria-label={`Selectionner une photo pour ${player.displayName}`}
+                            aria-label={t('admin.photos.selectPhotoFor', {
+                              player: player.displayName,
+                            })}
                             onChange={(event) =>
                               handleSingleFileChange(player.id, event.target.files?.[0] ?? null)
                             }
@@ -699,7 +695,7 @@ export function AdminPlayerPhotosPage() {
                           ) : (
                             <UploadCloud className="h-4 w-4" aria-hidden="true" />
                           )}
-                          Envoyer
+                          {t('admin.photos.send')}
                         </button>
                         <button
                           type="button"
@@ -708,7 +704,7 @@ export function AdminPlayerPhotosPage() {
                           className="inline-flex items-center justify-center gap-2 rounded-md border border-red-200 px-4 py-2 text-sm font-black text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400"
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          Supprimer la photo
+                          {t('admin.photos.deletePhoto')}
                         </button>
                       </div>
                     </article>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '../components/PageHeader';
 
@@ -7,21 +8,20 @@ interface AccessDeniedPageProps {
 }
 
 export function AccessDeniedPage({ description }: AccessDeniedPageProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
-        eyebrow="Acces refuse"
-        title="Cette zone est reservee aux administrateurs"
-        description={
-          description ??
-          'Ton compte est connecte, mais il ne dispose pas du role admin requis pour cette page.'
-        }
+        eyebrow={t('errors.ADMIN_REQUIRED')}
+        title={t('accessDenied.title')}
+        description={description ?? t('accessDenied.description')}
       />
       <Link
         to="/"
         className="inline-flex rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
       >
-        Retour a l accueil
+        {t('common.backHome')}
       </Link>
     </div>
   );

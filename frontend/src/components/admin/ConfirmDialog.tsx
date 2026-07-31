@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface ConfirmDialogProps {
   title: string;
   message: string;
@@ -17,6 +19,7 @@ export function ConfirmDialog({
   isSubmitting = false,
   tone = 'danger',
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   const confirmClassName =
     tone === 'danger'
       ? 'bg-red-700 text-white hover:bg-red-800'
@@ -34,7 +37,7 @@ export function ConfirmDialog({
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
             disabled={isSubmitting}
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -42,7 +45,7 @@ export function ConfirmDialog({
             className={`rounded-md px-4 py-2 text-sm font-black disabled:cursor-not-allowed disabled:bg-zinc-300 ${confirmClassName}`}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Traitement...' : confirmLabel}
+            {isSubmitting ? t('common.processing') : confirmLabel}
           </button>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router';
 
 import { PageHeader } from '../../components/PageHeader';
@@ -17,6 +18,7 @@ type LoginLocationState = {
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const { authError, signIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,12 +36,12 @@ export function LoginPage() {
     setFormError('');
 
     if (!isValidEmail(email.trim())) {
-      setFormError('Renseigne une adresse email valide.');
+      setFormError(t('auth.login.invalidEmail'));
       return;
     }
 
     if (!password) {
-      setFormError('Renseigne ton mot de passe.');
+      setFormError(t('auth.login.missingPassword'));
       return;
     }
 
@@ -48,7 +50,7 @@ export function LoginPage() {
     setIsSubmitting(false);
 
     if (!result.success) {
-      setFormError(result.error ?? 'Connexion impossible pour le moment.');
+      setFormError(result.error ?? t('auth.login.failed'));
       return;
     }
 
@@ -58,13 +60,13 @@ export function LoginPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader
-        eyebrow="Compte supporter"
-        title="Connexion"
-        description="Connecte-toi avec ton compte Supabase pour acceder aux votes et aux espaces proteges."
+        eyebrow={t('auth.accountEyebrow')}
+        title={t('auth.login.title')}
+        description={t('auth.login.description')}
       />
       <form onSubmit={handleSubmit} noValidate className="panel space-y-4 p-6">
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Email</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.email')}</span>
           <input
             type="email"
             value={email}
@@ -75,7 +77,7 @@ export function LoginPage() {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-zinc-700">Mot de passe</span>
+          <span className="text-sm font-bold text-zinc-700">{t('auth.password')}</span>
           <input
             type="password"
             value={password}
@@ -95,19 +97,19 @@ export function LoginPage() {
           disabled={isSubmitting}
           className="w-full rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
+          {isSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </button>
         <p className="text-sm text-zinc-600">
-          Pas encore inscrit ?{' '}
+          {t('auth.login.noAccount')}{' '}
           <Link to="/register" className="font-black text-united-red hover:text-red-800">
-            Creer un compte
+            {t('auth.login.createAccount')}
           </Link>
         </p>
         <Link
           to="/forgot-password"
           className="inline-flex text-sm font-black text-united-red hover:text-red-800"
         >
-          Mot de passe oublie ?
+          {t('auth.login.forgotPassword')}
         </Link>
       </form>
     </div>

@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
 import { OpponentLogo } from '../../components/OpponentLogo';
@@ -8,7 +9,8 @@ import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
 import { useAdminMatchResults } from '../../hooks/use-match-results';
 import { useMatch, useMatchMutations } from '../../hooks/use-matches';
-import { ApiError } from '../../lib/api';
+import { translateApiError } from '../../i18n/errors';
+import { useFormatters } from '../../i18n/format';
 import type { MatchResultRow } from '../../types/match';
 import { isUuid } from '../../utils/uuid';
 
@@ -17,12 +19,6 @@ interface Notification {
   message: string;
 }
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof ApiError ? error.message : fallback;
-
-const formatRating = (rating: number | null) => (rating === null ? '-' : rating.toFixed(2));
-const invalidMatchMessage = 'Sélectionnez d’abord un match.';
-
 function AdminRankingRow({
   row,
   isManOfTheMatch,
@@ -30,27 +26,34 @@ function AdminRankingRow({
   row: MatchResultRow;
   isManOfTheMatch: boolean;
 }) {
+  const { t } = useTranslation();
+  const { formatNumber, formatRating } = useFormatters();
+
   return (
     <tr>
-      <td className="table-cell font-black text-zinc-950">#{row.rank}</td>
+      <td className="table-cell font-black text-zinc-950">#{formatNumber(row.rank)}</td>
       <td className="table-cell">
         <span className="flex items-center gap-3 font-black text-zinc-950">
           <ApiPlayerAvatar player={row} size="sm" />
           {row.displayName}
         </span>
       </td>
-      <td className="table-cell">{row.position}</td>
-      <td className="table-cell">{row.votesCount}</td>
-      <td className="table-cell text-lg font-black text-united-red">
-        {formatRating(row.averageRating)}
+      <td className="table-cell">
+        {t(`positions.${row.position}`, { defaultValue: row.position })}
       </td>
-      <td className="table-cell">{row.manOfTheMatchVotes}</td>
-      <td className="table-cell">{isManOfTheMatch ? 'Oui' : '-'}</td>
+      <td className="table-cell">{formatNumber(row.votesCount)}</td>
+      <td className="table-cell text-lg font-black text-united-red">
+        {formatRating(row.averageRating, t('common.dash'))}
+      </td>
+      <td className="table-cell">{formatNumber(row.manOfTheMatchVotes)}</td>
+      <td className="table-cell">{isManOfTheMatch ? t('common.yes') : '-'}</td>
     </tr>
   );
 }
 
 export function AdminMatchVotesPage() {
+  const { t } = useTranslation();
+  const { formatNumber } = useFormatters();
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const hasValidMatchId = isUuid(matchId);
@@ -64,34 +67,37 @@ export function AdminMatchVotesPage() {
     if (!hasValidMatchId) {
       navigate('/admin/matches', {
         replace: true,
-        state: { message: invalidMatchMessage },
+        state: { message: t('admin.votes.invalidMatch') },
       });
     }
-  }, [hasValidMatchId, navigate]);
+  }, [hasValidMatchId, navigate, t]);
 
   if (!hasValidMatchId) {
     return (
       <PageHeader
-        eyebrow="Votes"
-        title={invalidMatchMessage}
-        description="Retour vers la liste des matchs."
+        eyebrow={t('admin.votes.title')}
+        title={t('admin.votes.invalidMatch')}
+        description={t('admin.votes.backDescription')}
       />
     );
   }
 
   if (resultsQuery.isLoading || matchQuery.isLoading) {
-    return <div className="panel p-6 text-sm font-semibold text-zinc-600">Chargement...</div>;
+    return (
+      <div className="panel p-6 text-sm font-semibold text-zinc-600">{t('common.loading')}</div>
+    );
   }
 
   if (resultsQuery.isError || matchQuery.isError) {
     return (
       <div className="space-y-4">
         <PageHeader
-          eyebrow="Votes"
-          title="Votes introuvables"
-          description={getErrorMessage(
+          eyebrow={t('admin.votes.title')}
+          title={t('admin.votes.notFound')}
+          description={translateApiError(
             resultsQuery.error ?? matchQuery.error,
-            'Impossible de charger les resultats.',
+            t,
+            'admin.votes.loadError',
           )}
         />
         <button
@@ -99,7 +105,7 @@ export function AdminMatchVotesPage() {
           onClick={() => void resultsQuery.refetch()}
           className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
         >
-          Reessayer
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -123,7 +129,7 @@ export function AdminMatchVotesPage() {
       callbacks: { onSuccess: () => void; onError: (error: unknown) => void },
     ) => void,
     successMessage: string,
-    fallbackError: string,
+    fallbackErrorKey: string,
   ) => {
     setNotification(null);
     mutate(safeMatchId, {
@@ -131,7 +137,7 @@ export function AdminMatchVotesPage() {
         setNotification({ type: 'success', message: successMessage });
       },
       onError: (error) => {
-        setNotification({ type: 'error', message: getErrorMessage(error, fallbackError) });
+        setNotification({ type: 'error', message: translateApiError(error, t, fallbackErrorKey) });
       },
     });
   };
@@ -139,12 +145,15 @@ export function AdminMatchVotesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Votes"
+        eyebrow={t('admin.votes.title')}
         title={`Manchester United vs ${results.match.opponentName}`}
         description={
           isScheduled
-            ? 'Les votes ne sont pas encore ouverts.'
-            : `${results.summary.usersWhoVoted} utilisateurs ont vote, ${results.summary.ratingsCount} notes au total.`
+            ? t('admin.votes.notOpen')
+            : t('admin.votes.summary', {
+                users: formatNumber(results.summary.usersWhoVoted),
+                ratings: formatNumber(results.summary.ratingsCount),
+              })
         }
         action={
           <>
@@ -157,7 +166,7 @@ export function AdminMatchVotesPage() {
               to="/admin/matches"
               className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100"
             >
-              Retour aux matchs
+              {t('admin.lineup.backToMatches')}
             </Link>
           </>
         }
@@ -177,36 +186,40 @@ export function AdminMatchVotesPage() {
 
       <section className="grid gap-4 md:grid-cols-4">
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Votes</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('admin.votes.title')}</p>
           <div className="mt-3">
             <VoteStatusBadge status={results.match.votingStatus} />
           </div>
         </article>
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Utilisateurs</p>
-          <p className="mt-2 text-3xl font-black text-zinc-950">{results.summary.usersWhoVoted}</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('admin.votes.users')}</p>
+          <p className="mt-2 text-3xl font-black text-zinc-950">
+            {formatNumber(results.summary.usersWhoVoted)}
+          </p>
         </article>
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Notes</p>
-          <p className="mt-2 text-3xl font-black text-zinc-950">{results.summary.ratingsCount}</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('admin.votes.ratings')}</p>
+          <p className="mt-2 text-3xl font-black text-zinc-950">
+            {formatNumber(results.summary.ratingsCount)}
+          </p>
         </article>
         <article className="panel p-5">
-          <p className="text-sm font-semibold text-zinc-500">Publication</p>
+          <p className="text-sm font-semibold text-zinc-500">{t('admin.votes.publication')}</p>
           <p className="mt-2 text-2xl font-black text-zinc-950">
-            {results.match.resultsPublished ? 'Publies' : 'Masques'}
+            {results.match.resultsPublished ? t('common.published') : t('common.hidden')}
           </p>
         </article>
       </section>
 
       {isScheduled ? (
         <div className="panel border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-          Les votes ne sont pas encore ouverts.
+          {t('admin.votes.notOpen')}
         </div>
       ) : null}
 
       {!isScheduled && results.match.votingStatus === 'open' && !hasVotes ? (
         <div className="panel p-4 text-sm font-semibold text-zinc-600">
-          Aucun utilisateur n’a encore voté.
+          {t('admin.votes.noVotesYet')}
         </div>
       ) : null}
 
@@ -217,14 +230,14 @@ export function AdminMatchVotesPage() {
             onClick={() =>
               handleMutation(
                 closeMatchVoting.mutate,
-                'Votes clotures.',
-                'Impossible de cloturer les votes.',
+                t('admin.matches.votingClosed'),
+                'admin.matches.closeVotingFailed',
               )
             }
             className="rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
             disabled={closeMatchVoting.isPending}
           >
-            Cloturer les votes
+            {t('admin.matches.closeVoting')}
           </button>
         ) : null}
 
@@ -234,15 +247,15 @@ export function AdminMatchVotesPage() {
             onClick={() =>
               handleMutation(
                 publishMatchResults.mutate,
-                'Resultats publies.',
-                'Impossible de publier les resultats.',
+                t('admin.matches.resultsPublished'),
+                'admin.matches.publishResultsFailed',
               )
             }
             className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
             disabled={publishMatchResults.isPending}
           >
             <Eye className="h-4 w-4" aria-hidden="true" />
-            Publier
+            {t('common.publish')}
           </button>
         ) : null}
 
@@ -252,26 +265,24 @@ export function AdminMatchVotesPage() {
             onClick={() =>
               handleMutation(
                 unpublishMatchResults.mutate,
-                'Resultats masques.',
-                'Impossible de masquer les resultats.',
+                t('admin.matches.resultsHidden'),
+                'admin.matches.hideResultsFailed',
               )
             }
             className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:bg-zinc-100"
             disabled={unpublishMatchResults.isPending}
           >
             <EyeOff className="h-4 w-4" aria-hidden="true" />
-            Masquer
+            {t('common.hide')}
           </button>
         ) : null}
       </section>
 
       {shouldShowAggregates || results.match.votingStatus === 'completed' ? (
         <section className="panel p-5">
-          <h2 className="text-xl font-black text-zinc-950">Homme du match</h2>
+          <h2 className="text-xl font-black text-zinc-950">{t('results.manOfTheMatch')}</h2>
           {results.manOfTheMatch.length === 0 ? (
-            <p className="mt-3 text-sm font-semibold text-zinc-600">
-              Aucune selection pour le moment.
-            </p>
+            <p className="mt-3 text-sm font-semibold text-zinc-600">{t('results.noSelection')}</p>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {results.manOfTheMatch.map((player) => (
@@ -283,7 +294,7 @@ export function AdminMatchVotesPage() {
                   <div>
                     <p className="font-black text-zinc-950">{player.displayName}</p>
                     <p className="text-sm text-zinc-500">
-                      {player.selections} selection{player.selections > 1 ? 's' : ''}
+                      {t('results.selection', { count: player.selections })}
                     </p>
                   </div>
                 </article>
@@ -291,7 +302,7 @@ export function AdminMatchVotesPage() {
             </div>
           )}
           {results.manOfTheMatch.length > 1 ? (
-            <p className="mt-3 text-sm font-semibold text-amber-700">Egalite homme du match.</p>
+            <p className="mt-3 text-sm font-semibold text-amber-700">{t('results.tie')}</p>
           ) : null}
         </section>
       ) : null}
@@ -299,22 +310,22 @@ export function AdminMatchVotesPage() {
       {shouldShowAggregates || results.match.votingStatus === 'completed' ? (
         <section className="panel overflow-hidden">
           <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="text-xl font-black text-zinc-950">Classement</h2>
+            <h2 className="text-xl font-black text-zinc-950">{t('ranking.title')}</h2>
           </div>
           {results.summary.ratingsCount === 0 ? (
-            <div className="p-6 text-sm font-semibold text-zinc-600">Aucun vote enregistre.</div>
+            <div className="p-6 text-sm font-semibold text-zinc-600">{t('results.noVotes')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-zinc-200">
                 <thead className="bg-zinc-50">
                   <tr>
-                    <th className="table-head">Rang</th>
-                    <th className="table-head">Joueur</th>
-                    <th className="table-head">Poste</th>
-                    <th className="table-head">Votes</th>
-                    <th className="table-head">Moyenne</th>
-                    <th className="table-head">MOTM</th>
-                    <th className="table-head">Ex aequo</th>
+                    <th className="table-head">{t('ranking.rank')}</th>
+                    <th className="table-head">{t('players.player')}</th>
+                    <th className="table-head">{t('players.position')}</th>
+                    <th className="table-head">{t('ranking.totalVotes')}</th>
+                    <th className="table-head">{t('ranking.averageRating')}</th>
+                    <th className="table-head">{t('admin.votes.motm')}</th>
+                    <th className="table-head">{t('admin.votes.tie')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 bg-white">
