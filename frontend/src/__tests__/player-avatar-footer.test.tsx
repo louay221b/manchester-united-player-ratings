@@ -60,9 +60,9 @@ describe('BrandLogo', () => {
 
     const logo = screen.getByRole('img', { name: 'Manchester United' });
 
-    expect(logo).toHaveAttribute('src', '/brand/manchester-united-logo.png');
-    expect(logo).toHaveAttribute('width', '48');
-    expect(logo).toHaveAttribute('height', '48');
+    expect(logo).toHaveAttribute('src', '/brand/icon-512.png');
+    expect(logo).toHaveAttribute('width', '56');
+    expect(logo).toHaveAttribute('height', '56');
 
     fireEvent.error(logo);
 

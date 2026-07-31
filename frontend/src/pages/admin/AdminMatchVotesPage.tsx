@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
@@ -157,6 +158,7 @@ export function AdminMatchVotesPage() {
         }
         action={
           <>
+            <BrandLogo size="sm" />
             <OpponentLogo
               opponentName={results.match.opponentName}
               logoUrl={results.match.opponentLogoUrl}

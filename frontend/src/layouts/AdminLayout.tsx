@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
+import { BrandLogo } from '../components/layout/BrandLogo';
 import { LanguageSwitcher } from '../components/layout/LanguageSwitcher';
 import { PageMeta } from '../components/PageMeta';
 import { NavLinkItem } from '../components/NavLinkItem';
@@ -45,9 +46,12 @@ export function AdminLayout() {
         robots="noindex, nofollow"
       />
       <aside className="panel h-fit p-3">
-        <div className="px-3 py-2">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-united-red">Admin</p>
-          <p className="mt-1 text-sm font-semibold text-zinc-500">{displayName}</p>
+        <div className="flex items-center gap-3 px-3 py-2">
+          <BrandLogo size="sm" />
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-united-red">Admin</p>
+            <p className="mt-1 truncate text-sm font-semibold text-zinc-500">{displayName}</p>
+          </div>
         </div>
         <nav className="mt-3 flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
           {links.map((link) => (

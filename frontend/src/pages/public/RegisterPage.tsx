@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { PageMeta } from '../../components/PageMeta';
 import { useAuth } from '../../contexts/useAuth';
@@ -68,6 +69,9 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageMeta title={t('seo.register.title')} description={t('seo.register.description')} />
+      <div className="flex justify-center">
+        <BrandLogo />
+      </div>
       <PageHeader
         eyebrow={t('auth.accountEyebrow')}
         title={t('auth.register.title')}

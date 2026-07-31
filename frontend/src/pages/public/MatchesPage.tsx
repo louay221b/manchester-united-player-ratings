@@ -2,6 +2,7 @@ import { ArrowRight, BarChart3, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { PageMeta } from '../../components/PageMeta';
@@ -22,10 +23,12 @@ function ApiMatchCard({ match }: { match: Match }) {
           <div>
             <p className="eyebrow">{match.competition}</p>
             <div className="mt-2 flex items-center gap-3">
+              <BrandLogo size="sm" />
+              <span className="text-sm font-black uppercase text-zinc-400">vs</span>
               <OpponentLogo
                 opponentName={match.opponentName}
                 logoUrl={match.opponentLogoUrl}
-                size="md"
+                size="sm"
               />
               <h2 className="text-xl font-black text-zinc-950">
                 Manchester United vs {match.opponentName}

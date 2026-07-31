@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { PageMeta } from '../../components/PageMeta';
@@ -170,11 +171,14 @@ export function PlayerVotePage() {
           t('matches.resultUnavailable'),
         )}`}
         action={
-          <OpponentLogo
-            opponentName={ballot.match.opponentName}
-            logoUrl={ballot.match.opponentLogoUrl}
-            size="lg"
-          />
+          <>
+            <BrandLogo />
+            <OpponentLogo
+              opponentName={ballot.match.opponentName}
+              logoUrl={ballot.match.opponentLogoUrl}
+              size="lg"
+            />
+          </>
         }
       />
 

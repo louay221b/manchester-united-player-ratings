@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { useMatchLineup, useMatchLineupMutations } from '../../hooks/use-match-lineup';
@@ -326,6 +327,7 @@ export function AdminMatchLineupPage() {
         description={t('admin.lineup.description')}
         action={
           <>
+            <BrandLogo size="sm" />
             <OpponentLogo
               opponentName={match.opponentName}
               logoUrl={match.opponentLogoUrl}

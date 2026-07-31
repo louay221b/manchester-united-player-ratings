@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { FinishMatchForm } from '../../components/admin/FinishMatchForm';
 import { MatchForm, type MatchLogoChange } from '../../components/admin/MatchForm';
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
@@ -424,6 +425,8 @@ export function AdminMatchesPage() {
                   <tr key={match.id}>
                     <td className="table-cell font-black text-zinc-950">
                       <span className="flex items-center gap-3">
+                        <BrandLogo size="sm" />
+                        <span className="text-xs font-black uppercase text-zinc-400">vs</span>
                         <OpponentLogo
                           opponentName={match.opponentName}
                           logoUrl={match.opponentLogoUrl}

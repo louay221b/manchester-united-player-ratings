@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 
 import { ApiPlayerAvatar } from '../../components/ApiPlayerAvatar';
+import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
 import { PageMeta } from '../../components/PageMeta';
@@ -100,6 +101,7 @@ export function MatchDetailsPage() {
         })} - ${match.venue ?? t('matches.venueTbc')}`}
         action={
           <>
+            <BrandLogo />
             <OpponentLogo
               opponentName={match.opponentName}
               logoUrl={match.opponentLogoUrl}
