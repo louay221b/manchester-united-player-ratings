@@ -21,6 +21,7 @@ interface MatchRow {
   opponent_name: string;
   opponent_logo_url: string | null;
   opponent_logo_path: string | null;
+  opponent_club_id: string | null;
   competition: string;
   match_date: string;
   venue: string | null;
@@ -30,6 +31,12 @@ interface MatchRow {
   status: MatchStatus;
   voting_status: VotingStatus;
   results_published: boolean;
+  external_provider: string | null;
+  external_fixture_id: string | null;
+  external_status: string | null;
+  last_synced_at: string | null;
+  sync_locked: boolean;
+  manually_corrected: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +84,7 @@ export interface MatchDto {
   opponentName: string;
   opponentLogoUrl: string | null;
   opponentLogoPath: string | null;
+  opponentClubId: string | null;
   competition: string;
   matchDate: string;
   venue: string | null;
@@ -86,6 +94,12 @@ export interface MatchDto {
   status: MatchStatus;
   votingStatus: VotingStatus;
   resultsPublished: boolean;
+  externalProvider: string | null;
+  externalFixtureId: string | null;
+  externalStatus: string | null;
+  lastSyncedAt: string | null;
+  syncLocked: boolean;
+  manuallyCorrected: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -124,7 +138,7 @@ export interface LineupPlayerDto {
 }
 
 const matchFields =
-  'id, season_id, opponent_name, opponent_logo_url, opponent_logo_path, competition, match_date, venue, is_home, manchester_united_score, opponent_score, status, voting_status, results_published, created_at, updated_at';
+  'id, season_id, opponent_name, opponent_logo_url, opponent_logo_path, opponent_club_id, competition, match_date, venue, is_home, manchester_united_score, opponent_score, status, voting_status, results_published, external_provider, external_fixture_id, external_status, last_synced_at, sync_locked, manually_corrected, created_at, updated_at';
 const seasonFields = 'id, name, start_date, end_date, status, created_at, updated_at';
 const matchPlayerFields =
   'id, match_id, player_id, participation_status, entered_minute, exited_minute, minutes_played, eligible_for_rating, created_at, updated_at';
@@ -137,6 +151,7 @@ const mapMatchRow = (match: MatchRow): MatchDto => ({
   opponentName: match.opponent_name,
   opponentLogoUrl: match.opponent_logo_url,
   opponentLogoPath: match.opponent_logo_path,
+  opponentClubId: match.opponent_club_id,
   competition: match.competition,
   matchDate: match.match_date,
   venue: match.venue,
@@ -146,6 +161,12 @@ const mapMatchRow = (match: MatchRow): MatchDto => ({
   status: match.status,
   votingStatus: match.voting_status,
   resultsPublished: match.results_published,
+  externalProvider: match.external_provider,
+  externalFixtureId: match.external_fixture_id,
+  externalStatus: match.external_status,
+  lastSyncedAt: match.last_synced_at,
+  syncLocked: match.sync_locked,
+  manuallyCorrected: match.manually_corrected,
   createdAt: match.created_at,
   updatedAt: match.updated_at,
 });
@@ -208,6 +229,7 @@ const mapUpdateMatchInput = (input: UpdateMatchInput) => ({
   ...(input.matchDate === undefined ? {} : { match_date: input.matchDate }),
   ...(input.venue === undefined ? {} : { venue: input.venue }),
   ...(input.isHome === undefined ? {} : { is_home: input.isHome }),
+  manually_corrected: true,
 });
 
 const mapLineupInput = (input: ReplaceLineupInput) =>

@@ -10,6 +10,7 @@ export interface Match {
   opponentName: string;
   opponentLogoUrl: string | null;
   opponentLogoPath: string | null;
+  opponentClubId: string | null;
   competition: string;
   matchDate: string;
   venue: string | null;
@@ -19,6 +20,12 @@ export interface Match {
   status: MatchStatus;
   votingStatus: VotingStatus;
   resultsPublished: boolean;
+  externalProvider: string | null;
+  externalFixtureId: string | null;
+  externalStatus: string | null;
+  lastSyncedAt: string | null;
+  syncLocked: boolean;
+  manuallyCorrected: boolean;
   createdAt: string;
   updatedAt: string;
 }

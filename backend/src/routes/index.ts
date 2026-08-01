@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { adminRouter } from './admin.routes.js';
 import { authRouter } from './auth.routes.js';
+import { footballRouter } from './football.routes.js';
 import { healthRouter } from './health.routes.js';
 import { matchesRouter } from './matches.routes.js';
 import { playersRouter } from './players.routes.js';
@@ -13,6 +14,7 @@ export const apiRouter = Router();
 
 apiRouter.use(healthRouter);
 apiRouter.use(authRouter);
+apiRouter.use(footballRouter);
 apiRouter.use(adminRouter);
 apiRouter.use(seasonsRouter);
 apiRouter.use(playersRouter);

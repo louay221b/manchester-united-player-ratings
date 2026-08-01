@@ -22,6 +22,10 @@ export const supabaseAuthClient = createClient(
   supabaseOptions,
 );
 
+export const supabaseServiceRoleClient = env.SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, supabaseOptions)
+  : null;
+
 export const createUserSupabaseClient = (accessToken: string) =>
   createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
     ...supabaseOptions,

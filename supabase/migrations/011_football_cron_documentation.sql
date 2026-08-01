@@ -1,0 +1,21 @@
+-- Football synchronization Cron documentation.
+-- This migration intentionally does not create scheduled jobs with embedded secrets.
+--
+-- Configure the real jobs manually in the Supabase Dashboard after the backend
+-- Render URL and CRON_SYNC_SECRET are available.
+--
+-- Job 1: General fixture synchronization
+-- Schedule: every 6 hours
+-- Method: POST
+-- URL: https://<render-backend-domain>/api/internal/football/sync
+-- Header: X-Cron-Secret from Supabase Vault or Dashboard configuration
+-- Body: {"mode":"fixtures"}
+--
+-- Job 2: Live/near-match synchronization
+-- Schedule: every 5 minutes
+-- Method: POST
+-- URL: https://<render-backend-domain>/api/internal/football/sync
+-- Header: X-Cron-Secret from Supabase Vault or Dashboard configuration
+-- Body: {"mode":"live"}
+--
+-- Never commit the real cron secret or API-Football key to Git.

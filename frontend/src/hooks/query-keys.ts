@@ -23,6 +23,7 @@ export const seasonRankingQueryKey = (seasonId: string, filters: object) => [
   filters,
 ];
 export const adminStatisticsQueryKey = ['admin-statistics'];
+export const footballIntegrationQueryKey = ['football-integration'];
 export const adminSeasonStatisticsBaseQueryKey = (seasonId: string) => [
   ...adminStatisticsQueryKey,
   'season',

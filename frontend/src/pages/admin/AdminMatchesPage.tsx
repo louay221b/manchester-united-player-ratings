@@ -1,5 +1,14 @@
-import { Eye, EyeOff, ListChecks, Pencil, Plus, SquareCheckBig, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Eye,
+  EyeOff,
+  ListChecks,
+  Pencil,
+  Plus,
+  RefreshCw,
+  SquareCheckBig,
+  Trash2,
+} from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 
@@ -9,7 +18,12 @@ import { MatchForm, type MatchLogoChange } from '../../components/admin/MatchFor
 import { BrandLogo } from '../../components/layout/BrandLogo';
 import { OpponentLogo } from '../../components/OpponentLogo';
 import { PageHeader } from '../../components/PageHeader';
+import { StatCard } from '../../components/StatCard';
 import { VoteStatusBadge } from '../../components/VoteStatusBadge';
+import {
+  useFootballIntegrationMutations,
+  useFootballIntegrationStatus,
+} from '../../hooks/use-football-integration';
 import { useMatchMutations, useMatches } from '../../hooks/use-matches';
 import { useSeasons } from '../../hooks/use-seasons';
 import { translateApiError } from '../../i18n/errors';
@@ -19,6 +33,7 @@ import {
   uploadOpponentLogo,
 } from '../../services/storage.service';
 import type { Match, MatchPayload } from '../../types/match';
+import type { FootballSyncSummary } from '../../types/football';
 
 interface Notification {
   type: 'success' | 'error' | 'warning';
@@ -26,6 +41,28 @@ interface Notification {
 }
 
 const pageSize = 20;
+
+interface SyncBadgeProps {
+  children: ReactNode;
+  tone: 'green' | 'amber' | 'zinc';
+}
+
+function SyncBadge({ children, tone }: SyncBadgeProps) {
+  const toneClass =
+    tone === 'green'
+      ? 'border-green-200 bg-green-50 text-green-800'
+      : tone === 'amber'
+        ? 'border-amber-200 bg-amber-50 text-amber-800'
+        : 'border-zinc-200 bg-zinc-50 text-zinc-600';
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${toneClass}`}
+    >
+      {children}
+    </span>
+  );
+}
 
 const cleanupUploadedLogo = async (path: string | null) => {
   if (!path) {
@@ -42,7 +79,7 @@ const cleanupUploadedLogo = async (path: string | null) => {
 
 export function AdminMatchesPage() {
   const { t } = useTranslation();
-  const { formatDate, formatScore } = useFormatters();
+  const { formatDate, formatNumber, formatScore } = useFormatters();
   const [page] = useState(1);
   const location = useLocation();
   const routeMessage =
@@ -54,6 +91,8 @@ export function AdminMatchesPage() {
       : null;
   const matchesQuery = useMatches({ page, limit: pageSize });
   const seasonsQuery = useSeasons();
+  const footballStatusQuery = useFootballIntegrationStatus();
+  const { syncFixtures } = useFootballIntegrationMutations();
   const {
     createMatch,
     updateMatch,
@@ -70,14 +109,41 @@ export function AdminMatchesPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [lastSyncSummary, setLastSyncSummary] = useState<FootballSyncSummary | null>(null);
   const [isAssetProcessing, setIsAssetProcessing] = useState(false);
 
   const isSubmitting = createMatch.isPending || updateMatch.isPending || isAssetProcessing;
+  const formatSyncDate = (value: string | null | undefined) =>
+    value
+      ? formatDate(value, {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '-';
 
   const openCreateForm = () => {
     setEditingMatch(undefined);
     setFormError(null);
     setIsFormOpen(true);
+  };
+
+  const handleSyncFixtures = () => {
+    setNotification(null);
+    syncFixtures.mutate(undefined, {
+      onSuccess: (summary) => {
+        setLastSyncSummary(summary);
+        setNotification({ type: 'success', message: t('admin.football.syncSuccess') });
+      },
+      onError: (error) => {
+        setNotification({
+          type: 'error',
+          message: translateApiError(error, t, 'admin.football.syncError'),
+        });
+      },
+    });
   };
 
   const openEditForm = (match: Match) => {
@@ -322,14 +388,30 @@ export function AdminMatchesPage() {
         title={t('admin.matches.title')}
         description={t('admin.matches.description')}
         action={
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            {t('common.create')}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleSyncFixtures}
+              disabled={syncFixtures.isPending}
+              className="inline-flex items-center gap-2 rounded-md bg-united-red px-4 py-2 text-sm font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${syncFixtures.isPending ? 'animate-spin' : ''}`}
+                aria-hidden="true"
+              />
+              {syncFixtures.isPending
+                ? t('admin.football.syncing')
+                : t('admin.football.syncMatches')}
+            </button>
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm font-black text-zinc-800 hover:border-united-red hover:text-united-red"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {t('admin.matches.createManual')}
+            </button>
+          </>
         }
       />
 
@@ -352,6 +434,68 @@ export function AdminMatchesPage() {
           {notification.message}
         </div>
       ) : null}
+
+      <section className="space-y-4">
+        <div className="panel p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-black text-zinc-950">{t('admin.football.status')}</h2>
+              <p className="mt-1 text-sm font-semibold text-zinc-500">
+                {t('admin.football.lastSynchronization')}:{' '}
+                <span className="text-zinc-800">
+                  {footballStatusQuery.isSuccess
+                    ? formatSyncDate(footballStatusQuery.data.lastSynchronization)
+                    : '-'}
+                </span>
+              </p>
+            </div>
+            <div className="text-left text-sm font-semibold text-zinc-500 md:text-right">
+              <p>
+                {t('admin.football.lastSuccess')}:{' '}
+                <span className="text-zinc-800">
+                  {footballStatusQuery.isSuccess
+                    ? formatSyncDate(footballStatusQuery.data.lastSuccess)
+                    : '-'}
+                </span>
+              </p>
+              <p className="mt-1">
+                {t('admin.football.lastError')}:{' '}
+                <span className="text-zinc-800">
+                  {footballStatusQuery.isSuccess
+                    ? (footballStatusQuery.data.lastError ?? '-')
+                    : '-'}
+                </span>
+              </p>
+            </div>
+          </div>
+          {footballStatusQuery.isError ? (
+            <p className="mt-3 text-sm font-semibold text-red-700">
+              {translateApiError(footballStatusQuery.error, t, 'admin.football.loadError')}
+            </p>
+          ) : null}
+        </div>
+
+        {lastSyncSummary ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label={t('admin.football.created')}
+              value={formatNumber(lastSyncSummary.created)}
+            />
+            <StatCard
+              label={t('admin.football.updated')}
+              value={formatNumber(lastSyncSummary.updated)}
+            />
+            <StatCard
+              label={t('admin.football.unchanged')}
+              value={formatNumber(lastSyncSummary.unchanged)}
+            />
+            <StatCard
+              label={t('admin.football.errors')}
+              value={formatNumber(lastSyncSummary.errors)}
+            />
+          </div>
+        ) : null}
+      </section>
 
       {isFormOpen ? (
         <MatchForm
@@ -424,16 +568,31 @@ export function AdminMatchesPage() {
                 {matchesQuery.data.data.map((match) => (
                   <tr key={match.id}>
                     <td className="table-cell font-black text-zinc-950">
-                      <span className="flex items-center gap-3">
-                        <BrandLogo size="sm" />
-                        <span className="text-xs font-black uppercase text-zinc-400">vs</span>
-                        <OpponentLogo
-                          opponentName={match.opponentName}
-                          logoUrl={match.opponentLogoUrl}
-                          size="sm"
-                        />
-                        <span>Manchester United vs {match.opponentName}</span>
-                      </span>
+                      <div className="space-y-2">
+                        <span className="flex items-center gap-3">
+                          <BrandLogo size="sm" />
+                          <span className="text-xs font-black uppercase text-zinc-400">vs</span>
+                          <OpponentLogo
+                            opponentName={match.opponentName}
+                            logoUrl={match.opponentLogoUrl}
+                            size="sm"
+                          />
+                          <span>Manchester United vs {match.opponentName}</span>
+                        </span>
+                        <span className="flex flex-wrap gap-2">
+                          {match.externalProvider ? (
+                            <SyncBadge tone="green">{t('admin.football.autoSynced')}</SyncBadge>
+                          ) : null}
+                          {match.manuallyCorrected ? (
+                            <SyncBadge tone="amber">
+                              {t('admin.football.manualCorrection')}
+                            </SyncBadge>
+                          ) : null}
+                          {match.syncLocked ? (
+                            <SyncBadge tone="zinc">{t('admin.football.locked')}</SyncBadge>
+                          ) : null}
+                        </span>
+                      </div>
                     </td>
                     <td className="table-cell">{match.competition}</td>
                     <td className="table-cell">

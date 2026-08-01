@@ -5,6 +5,7 @@ import { AdminLayout } from '../layouts/AdminLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import {
   AdminDashboardPage,
+  AdminFootballIntegrationPage,
   AdminMatchesPage,
   AdminMatchLineupPage,
   AdminMatchVotesPage,
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
               { path: 'players', element: withSuspense(<AdminPlayersPage />) },
               { path: 'players/photos', element: withSuspense(<AdminPlayerPhotosPage />) },
               { path: 'matches', element: withSuspense(<AdminMatchesPage />) },
+              {
+                path: 'integrations/football',
+                element: withSuspense(<AdminFootballIntegrationPage />),
+              },
               { path: 'matches/:matchId/lineup', element: withSuspense(<AdminMatchLineupPage />) },
               { path: 'matches/:matchId/votes', element: withSuspense(<AdminMatchVotesPage />) },
               { path: 'statistics', element: withSuspense(<AdminStatisticsPage />) },

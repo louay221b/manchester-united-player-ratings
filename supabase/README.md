@@ -22,7 +22,8 @@ It does not contain Supabase keys, does not configure frontend authentication, a
 Run every SQL migration in filename order. Do not edit an already applied migration.
 
 The migrations create enum types, tables, functions, triggers, RLS policies, indexes, aggregate
-views, voting RPCs, Manchester United squad seed data, and season ranking RPCs.
+views, voting RPCs, Manchester United squad seed data, season ranking RPCs, and football provider
+synchronization metadata.
 
 ## Run the Seed Separately
 
@@ -51,11 +52,13 @@ Expected tables:
 
 - `profiles`
 - `seasons`
+- `clubs`
 - `players`
 - `matches`
 - `match_players`
 - `votes`
 - `man_of_the_match_votes`
+- `football_sync_runs`
 
 Verify the views:
 
@@ -83,6 +86,50 @@ where specific_schema = 'public'
   )
 order by routine_name;
 ```
+
+## API-Football Synchronization
+
+Migration `010_football_external_sync.sql` adds provider identifiers for clubs, matches, and
+players. It also creates `football_sync_runs` so the admin interface can show the latest
+synchronization status without exposing provider secrets.
+
+The backend must run the synchronization because API-Football secrets must never be placed in the
+frontend. Add these variables only to the backend hosting provider, for example Render:
+
+- `FOOTBALL_API_BASE_URL`
+- `FOOTBALL_API_KEY`
+- `FOOTBALL_PROVIDER`
+- `MANCHESTER_UNITED_EXTERNAL_ID`
+- `FOOTBALL_CURRENT_SEASON`
+- `FOOTBALL_INCLUDE_FRIENDLIES`
+- `FOOTBALL_ALLOWED_COMPETITIONS`
+- `CRON_SYNC_SECRET`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+`SUPABASE_SERVICE_ROLE_KEY` is needed only by the backend synchronization worker so it can create
+clubs, matches, players, and lineups from trusted server-side code. Do not add it to Vercel, React,
+Git, logs, or HTTP responses.
+
+## Scheduled Synchronization
+
+Migration `011_football_cron_documentation.sql` documents the cron calls but intentionally does not
+store any real secret. Configure the jobs manually in Supabase Dashboard, Supabase Vault, or another
+trusted scheduler.
+
+Create two scheduled POST requests to the backend:
+
+- Every 6 hours: `POST /api/internal/football/sync` with body `{"mode":"fixtures"}`.
+- Every 5 minutes: `POST /api/internal/football/sync` with body `{"mode":"live"}`.
+
+Both requests must include:
+
+```text
+X-Cron-Secret: value_from_secure_storage
+Content-Type: application/json
+```
+
+The live job is intentionally narrow: it only asks the backend to refresh matches between 3 hours
+before now and 5 hours after now, which keeps API-Football usage controlled.
 
 Verify RLS:
 

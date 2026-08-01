@@ -90,6 +90,14 @@ export const AdminMatchesPage = lazy(() =>
   })),
 );
 
+export const AdminFootballIntegrationPage = lazy(() =>
+  import('../pages/admin/AdminFootballIntegrationPage').then(
+    ({ AdminFootballIntegrationPage }) => ({
+      default: AdminFootballIntegrationPage,
+    }),
+  ),
+);
+
 export const AdminMatchLineupPage = lazy(() =>
   import('../pages/admin/AdminMatchLineupPage').then(({ AdminMatchLineupPage }) => ({
     default: AdminMatchLineupPage,

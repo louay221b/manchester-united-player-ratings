@@ -18,6 +18,7 @@ export function AdminLayout() {
     { to: '/admin/seasons', label: t('navigation.seasons') },
     { to: '/admin/players', label: t('navigation.players') },
     { to: '/admin/matches', label: t('navigation.matchesAdmin') },
+    { to: '/admin/integrations/football', label: t('navigation.footballIntegration') },
     { to: '/admin/statistics', label: t('navigation.statistics') },
   ];
 
