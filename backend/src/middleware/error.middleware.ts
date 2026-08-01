@@ -3,7 +3,12 @@ import { ZodError } from 'zod';
 
 import { HttpError } from '../utils/http-error.js';
 
-export const errorMiddleware: ErrorRequestHandler = (error, _request, response, _next) => {
+export const errorMiddleware: ErrorRequestHandler = (
+  error,
+  request,
+  response,
+  _next,
+) => {
   if (error instanceof HttpError) {
     const errorBody = {
       code: error.code,
@@ -32,6 +37,17 @@ export const errorMiddleware: ErrorRequestHandler = (error, _request, response, 
     });
     return;
   }
+
+  const normalizedError =
+    error instanceof Error ? error : new Error(String(error));
+
+  console.error('[global-error-handler]', {
+    method: request.method,
+    path: request.originalUrl,
+    name: normalizedError.name,
+    message: normalizedError.message,
+    stack: normalizedError.stack,
+  });
 
   response.status(500).json({
     success: false,
