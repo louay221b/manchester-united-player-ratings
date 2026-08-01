@@ -247,10 +247,18 @@ export class ApiFootballClient implements FootballProvider {
         const payload = await response.json();
         const parsedPayload = responseEnvelopeSchema(responseSchema).parse(payload);
 
-        if (hasApiErrors(parsedPayload.errors)) {
-          throw new HttpError(502, 'FOOTBALL_PROVIDER_ERROR', 'Football provider returned errors');
-        }
+       if (hasApiErrors(parsedPayload.errors)) {
+  console.error('[api-football] Provider response errors', {
+    errors: parsedPayload.errors,
+    results: parsedPayload.results,
+  });
 
+  throw new HttpError(
+    502,
+    'FOOTBALL_PROVIDER_ERROR',
+    'Football provider returned errors',
+  );
+}
         return parsedPayload.response;
       } catch (error) {
         if (error instanceof HttpError) {
