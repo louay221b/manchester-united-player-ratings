@@ -782,6 +782,8 @@ const openVotingForFinishedFixture = async (
 };
 
 const createSyncRun = async (client: SupabaseClient, mode: FootballSyncMode) => {
+  console.info('[football-sync] Creating sync run');
+
   const { data, error } = await client
     .from('football_sync_runs')
     .insert({
@@ -793,8 +795,17 @@ const createSyncRun = async (client: SupabaseClient, mode: FootballSyncMode) => 
     .maybeSingle<{ id: string }>();
 
   if (error) {
+    console.error('[football-sync] createSyncRun database error', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+
     throw mapSupabaseError(error, 'Unable to create football sync run');
   }
+
+  console.info('[football-sync] Sync run created');
 
   return data?.id ?? null;
 };
