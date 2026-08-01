@@ -6,6 +6,7 @@ import { HttpError } from '../../utils/http-error.js';
 import { mapSupabaseError } from '../../utils/supabase-error.js';
 import { normalizeClubName, buildManchesterUnitedLineup } from './api-football.mapper.js';
 import { ApiFootballClient } from './api-football.client.js';
+import { logFootballSyncConfiguration, logFootballSyncFailure } from './football-sync.logger.js';
 import type { FootballProvider } from './football-provider.js';
 import type {
   FootballIntegrationStatus,
@@ -836,18 +837,34 @@ const withSyncRun = async (
   mode: FootballSyncMode,
   operation: (client: SupabaseClient, provider: FootballProvider) => Promise<FootballSyncSummary>,
 ) => {
-  const client = getServiceClient();
-  const provider = getProvider();
-  const runId = await createSyncRun(client, mode);
+  logFootballSyncConfiguration();
+
   const summary = createSummary();
+  let client: SupabaseClient | null = null;
+  let runId: string | null = null;
 
   try {
+    client = getServiceClient();
+    const provider = getProvider();
+    runId = await createSyncRun(client, mode);
     const result = await operation(client, provider);
     await finishSyncRun(client, runId, mode, result);
     return result;
   } catch (error) {
+    logFootballSyncFailure(error);
     summary.errors += 1;
-    await finishSyncRun(client, runId, mode, summary, error);
+
+    if (client) {
+      try {
+        await finishSyncRun(client, runId, mode, summary, error);
+      } catch (syncRunError) {
+        logFootballSyncFailure(
+          syncRunError,
+          '[football-sync] Failed to record synchronization failure',
+        );
+      }
+    }
+
     throw error;
   }
 };

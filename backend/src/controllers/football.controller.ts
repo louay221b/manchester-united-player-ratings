@@ -8,6 +8,7 @@ import {
   syncManchesterUnitedFixtures,
   testFootballConnection,
 } from '../integrations/football/football-sync.service.js';
+import { logFootballSyncFailure } from '../integrations/football/football-sync.logger.js';
 
 export const getFootballStatus: RequestHandler = async (_request, response, next) => {
   try {
@@ -81,6 +82,7 @@ export const postInternalFootballSync: RequestHandler = async (request, response
       },
     });
   } catch (error) {
+    logFootballSyncFailure(error);
     next(error);
   }
 };
